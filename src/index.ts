@@ -87,7 +87,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
                 }
               })
             
-              pumpkins.utils.log("Seeded: %j", result)
+              console.log("Seeded: %j", result)
             
               photon.disconnect()
             }

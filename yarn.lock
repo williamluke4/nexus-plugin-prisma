@@ -983,6 +983,11 @@
   resolved "https://registry.yarnpkg.com/@prisma/photon/-/photon-2.0.0-preview017.2.tgz#046ffe1a21ec8f00e54815ac917bf2269e3691b1"
   integrity sha512-cWAmYKYpMh0o33yGMpjs8KoDjTGwJ4M/kR+0ACDMSWocc3Rote0EZcGSL4AsJ2u5TrT9yLymECHDiAzDdDcTjQ==
 
+"@prisma/photon@^2.0.0-preview018.1":
+  version "2.0.0-preview018.1"
+  resolved "https://registry.yarnpkg.com/@prisma/photon/-/photon-2.0.0-preview018.1.tgz#6be288952afcf800363a141ed1a737e21aec087c"
+  integrity sha512-upmbAqMeQDXgGDYDiraA+To4GSnIU8hzTXPqzo8nEIYtelwGYEAgaZnGb9YfsZdpQrWzARGVs1PMO+A2P895gw==
+
 "@prisma/sdk@0.0.82":
   version "0.0.82"
   resolved "https://registry.yarnpkg.com/@prisma/sdk/-/sdk-0.0.82.tgz#8391eb0293d3aab85127d03926aa1a730c74fc6e"
@@ -6165,6 +6170,11 @@ prisma2@2.0.0-preview017.2:
   resolved "https://registry.yarnpkg.com/prisma2/-/prisma2-2.0.0-preview017.2.tgz#a5f741fda24f13a060b570dc591d52c456277dae"
   integrity sha512-xT8uB1Afxk64yk35BvfTw2+LBywzca8DuSTEob08VmJ41tKHtXGbaWIJRA75dAXDMWEGvW+Y4749rKJge3n8rA==
 
+prisma2@^2.0.0-preview018.1:
+  version "2.0.0-preview018.1"
+  resolved "https://registry.yarnpkg.com/prisma2/-/prisma2-2.0.0-preview018.1.tgz#00886734455eba9fdffec8fdd8a171b594a61f5c"
+  integrity sha512-vqoMY4v/GY0oKPlcnNnpcXoNWDEtUVd9vTg+Ad6UAMogVmgYg48YriXCA2RwvoWZdSseoXbwHTnnQF1qSCgz5g==
+
 prismjs@^1.17.1:
   version "1.17.1"
   resolved "https://registry.yarnpkg.com/prismjs/-/prismjs-1.17.1.tgz#e669fcbd4cdd873c35102881c33b14d0d68519be"
@@ -6235,10 +6245,21 @@ pump@^3.0.0:
     end-of-stream "^1.1.0"
     once "^1.3.1"
 
-pumpkins@^0.0.0-master.b2a3f5e:
-  version "0.0.0-master.b2a3f5e"
-  resolved "https://registry.yarnpkg.com/pumpkins/-/pumpkins-0.0.0-master.b2a3f5e.tgz#c73754e26e3651c240e00b076163d5101c0e678a"
-  integrity sha512-pLnjF5VNQQ8yxuu9su+8gslJi2fOnn0lk5uwbPmCH1flVurSZ4oo3sBL4K34jNqEJQDelP6r27/3q7j4D7q6gQ==
+pumpkins-plugin-prisma@^0.0.0-master.e9aae82:
+  version "0.0.0-pr.1.df52bf8"
+  resolved "https://registry.yarnpkg.com/pumpkins-plugin-prisma/-/pumpkins-plugin-prisma-0.0.0-pr.1.df52bf8.tgz#65535a492bcabd84369ee3d2d12e54510846a9ed"
+  integrity sha512-/+s7L6/ENAbRlbtNsQLsdTutAdMu/JJsrMEso3lNxd8BnbLU88z6BiQEO1nmwtIKn0Pbl3xzKIJnjpXtso0rog==
+  dependencies:
+    chalk "^3.0.0"
+    common-tags "^1.8.0"
+    fs-jetpack "^2.2.3"
+    nexus-prisma "^0.6.1"
+    prismjs "^1.17.1"
+
+pumpkins@^0.0.0-pr.150.4f647ee:
+  version "0.0.0-pr.150.4f647ee"
+  resolved "https://registry.yarnpkg.com/pumpkins/-/pumpkins-0.0.0-pr.150.4f647ee.tgz#7d89fa485c6459c817ca92fbbd772e27ffefacb8"
+  integrity sha512-77tCuxhOjyykfKPDQny1cknCSj2Tpy38qH0TsVkbArq97P8viELIdrEFw6iQGJgjk94029JdNg+M8Qke/DC67Q==
   dependencies:
     "@prisma/photon" "2.0.0-preview017.2"
     "@prisma/sdk" "0.0.82"
@@ -6255,7 +6276,7 @@ pumpkins@^0.0.0-master.b2a3f5e:
     nexus "^0.12.0-rc.5"
     nexus-prisma "^0.6.2-next.1"
     prisma2 "2.0.0-preview017.2"
-    prismjs "^1.17.1"
+    pumpkins-plugin-prisma "^0.0.0-master.e9aae82"
     react "^16.12.0"
     simple-git "^1.126.0"
     stacktrace-parser "^0.1.7"
