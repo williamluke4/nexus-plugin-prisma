@@ -1,6 +1,6 @@
 {
   "name": "pumpkins-plugin-prisma",
-  "version": "0.0.0-master.e9aae82",
+  "version": "0.0.0-master.ffec906",
   "license": "MIT",
   "author": "Jason Kuhrt",
   "main": "dist/index.js",
@@ -32,19 +32,21 @@
     "trailingComma": "es5"
   },
   "devDependencies": {
+    "@babel/core": "^7.7.5",
     "@babel/plugin-proposal-nullish-coalescing-operator": "^7.7.4",
     "@babel/plugin-proposal-optional-chaining": "^7.7.5",
     "@types/common-tags": "^1.8.0",
     "@types/jest": "^24.0.23",
     "@types/prismjs": "^1.16.0",
     "husky": "^3.1.0",
-    "pumpkins": "^0.0.0-pr.150.4f647ee",
+    "pumpkins": "^0.0.0-master.c186cc8",
     "tsdx": "^0.11.0",
     "tslib": "^1.10.0",
     "typescript": "^3.7.3"
   },
   "dependencies": {
     "@prisma/photon": "^2.0.0-preview018.1",
+    "@prisma/sdk": "^0.0.99",
     "chalk": "^3.0.0",
     "common-tags": "^1.8.0",
     "fs-jetpack": "^2.2.3",
