@@ -1,50 +1,50 @@
-import * as Prisma from '@prisma/sdk';
-import chalk from 'chalk';
-import * as fs from 'fs-jetpack';
-import { nexusPrismaPlugin, Options } from 'nexus-prisma';
-import * as path from 'path';
-import { suggestionList } from './lib/levenstein';
-import { printStack } from './lib/print-stack';
-import { shouldGenerateArtifacts } from 'pumpkins/dist/framework/nexus';
-import * as PumpkinsPlugin from 'pumpkins/dist/framework/plugin';
-import { stripIndent } from 'common-tags';
+import * as Prisma from '@prisma/sdk'
+import chalk from 'chalk'
+import * as fs from 'fs-jetpack'
+import { nexusPrismaPlugin, Options } from 'nexus-prisma'
+import * as path from 'path'
+import { suggestionList } from './lib/levenstein'
+import { printStack } from './lib/print-stack'
+import { shouldGenerateArtifacts } from 'pumpkins/dist/framework/nexus'
+import * as PumpkinsPlugin from 'pumpkins/dist/framework/plugin'
+import { stripIndent } from 'common-tags'
 
 type UnknownFieldName = {
-  error: Error;
-  unknownFieldName: string;
-  validFieldNames: string[];
-  typeName: string;
-};
+  error: Error
+  unknownFieldName: string
+  validFieldNames: string[]
+  typeName: string
+}
 
 export type UnknownFieldType = {
-  unknownFieldType: string;
-  error: Error;
-  typeName: string;
-  fieldName: string;
-};
+  unknownFieldType: string
+  error: Error
+  typeName: string
+  fieldName: string
+}
 
 type OptionsWithHook = Options & {
-  onUnknownFieldName: (params: UnknownFieldName) => void;
-  onUnknownFieldType: (params: UnknownFieldType) => void;
-};
+  onUnknownFieldName: (params: UnknownFieldName) => void
+  onUnknownFieldType: (params: UnknownFieldType) => void
+}
 
 // HACK
 // 1. https://prisma-company.slack.com/archives/C8AKVD5HU/p1574267904197600
 // 2. https://prisma-company.slack.com/archives/CEYCG2MCN/p1574267824465700
-const GENERATED_PHOTON_OUTPUT_PATH = fs.path('node_modules/@prisma/photon');
+const GENERATED_PHOTON_OUTPUT_PATH = fs.path('node_modules/@prisma/photon')
 
 export default PumpkinsPlugin.create(controller => {
   const nexusPrismaTypegenOutput = fs.path(
     'node_modules/@types/typegen-nexus-prisma/index.d.ts'
-  );
+  )
 
   return {
     workflow: {
       async onBuildStart() {
-        await runPrismaGenerators();
+        await runPrismaGenerators()
       },
       async onDevStart() {
-        await runPrismaGenerators();
+        await runPrismaGenerators()
       },
       async onCreateAfterScaffold() {
         // TODO augment package.json to include pumpkins-plugin-prisma
@@ -132,31 +132,31 @@ export default PumpkinsPlugin.create(controller => {
               })
             `
           ),
-        ]);
+        ])
       },
       async onCreateAfterDepInstall() {
-        controller.debug('initializing development database...');
+        controller.debug('initializing development database...')
         // TODO expose run on pumpkins
         await controller.run(
           'yarn -s prisma2 lift save --create-db --name init'
-        );
-        await controller.run('yarn -s prisma2 lift up');
+        )
+        await controller.run('yarn -s prisma2 lift up')
 
-        controller.debug('seeding data...');
-        await controller.run('yarn -s ts-node prisma/seed');
+        controller.debug('seeding data...')
+        await controller.run('yarn -s ts-node prisma/seed')
       },
       async onGenerateStart() {
-        await runPrismaGenerators();
+        await runPrismaGenerators()
       },
       onDevFileWatcherEvent(_event, file) {
         if (file.match(/.*schema\.prisma$/)) {
-          controller.log.info(chalk`Prisma Schema change detected, lifting...`);
+          controller.log.info(chalk`Prisma Schema change detected, lifting...`)
           // Raw code being run is this https://github.com/prisma/lift/blob/dce60fe2c44e8a0d951d961187aec95a50a33c6f/src/cli/commands/LiftTmpPrepare.ts#L33-L45
-          controller.debug('running lift...');
+          controller.debug('running lift...')
           const result = controller.run('prisma2 tmp-prepare', {
             require: true,
-          });
-          controller.debug('done %O', result);
+          })
+          controller.debug('done %O', result)
         }
       },
       // TODO preferably we allow schema.prisma to be anywhere but they show up in
@@ -166,13 +166,13 @@ export default PumpkinsPlugin.create(controller => {
     },
     runtime: {
       onInstall() {
-        const { Photon } = require('@prisma/photon');
-        const photon = new Photon();
+        const { Photon } = require('@prisma/photon')
+        const photon = new Photon()
 
         return {
           context: {
             create: _req => {
-              return { photon };
+              return { photon }
             },
             typeGen: {
               imports: [{ as: 'Photon', from: GENERATED_PHOTON_OUTPUT_PATH }],
@@ -198,10 +198,10 @@ export default PumpkinsPlugin.create(controller => {
               } as OptionsWithHook),
             ],
           },
-        };
+        }
       },
     },
-  };
+  }
 
   /**
    * Execute all the generators in the user's PSL file.
@@ -209,44 +209,44 @@ export default PumpkinsPlugin.create(controller => {
   async function runPrismaGenerators(
     options: { silent: boolean } = { silent: false }
   ): Promise<void> {
-    const schemaPath = await maybeFindPrismaSchema();
+    const schemaPath = await maybeFindPrismaSchema()
 
     if (!schemaPath) {
-      throw new Error('please create a prisma file');
+      throw new Error('please create a prisma file')
     }
 
     // TODO Do not assume that just because photon does not need to be regenerated that no other generators do
     if ((await shouldRegeneratePhoton(schemaPath)) === false) {
       controller.debug(
         'Prisma generators were not run because the prisma schema was not updated'
-      );
-      return;
+      )
+      return
     }
 
     if (!options.silent) {
-      controller.log.info('Running Prisma generators ...');
+      controller.log.info('Running Prisma generators ...')
     }
 
-    let generators = await getGenerators(schemaPath);
+    let generators = await getGenerators(schemaPath)
 
     if (!generators.find(g => g.options?.generator.provider === 'photonjs')) {
-      await scaffoldPhotonGeneratorBlock(schemaPath);
+      await scaffoldPhotonGeneratorBlock(schemaPath)
       // TODO: Generate it programmatically instead for performance reason
-      generators = await getGenerators(schemaPath);
+      generators = await getGenerators(schemaPath)
     }
 
     for (const g of generators) {
-      const resolvedSettings = getGeneratorResolvedSettings(g);
+      const resolvedSettings = getGeneratorResolvedSettings(g)
 
       controller.debug(
         'generating %s instance %s to %s',
         resolvedSettings.name,
         resolvedSettings.instanceName,
         resolvedSettings.output
-      );
+      )
 
-      await g.generate();
-      g.stop();
+      await g.generate()
+      g.stop()
     }
   }
 
@@ -257,17 +257,17 @@ export default PumpkinsPlugin.create(controller => {
     // TODO ...base ignores from pumpkins... pumpkins.fs.findAsync?
     const schemaPaths = await fs.findAsync({
       matching: ['schema.prisma', '!prisma/migrations/**/*'],
-    });
+    })
 
     if (schemaPaths.length > 1) {
       console.warn(
         `Warning: we found multiple "schema.prisma" files in your project.\n${schemaPaths
           .map((p, i) => `- "${p}"${i === 0 ? ' (used by pumpkins)' : ''}`)
           .join('\n')}`
-      );
+      )
     }
 
-    return schemaPaths[0] ?? null;
+    return schemaPaths[0] ?? null
   }
 
   /**
@@ -279,55 +279,55 @@ export default PumpkinsPlugin.create(controller => {
     const photonSchemaPath = path.join(
       GENERATED_PHOTON_OUTPUT_PATH,
       'schema.prisma'
-    );
+    )
 
     controller.debug(
       "checking if photon needs to be regenerated by comparing users PSL to photon's local copy...\n%s\n%s",
       photonSchemaPath,
       localSchemaPath
-    );
+    )
 
     const [photonSchema, localSchema] = await Promise.all([
       fs.readAsync(photonSchemaPath),
       fs.readAsync(localSchemaPath),
-    ]);
+    ])
 
     if (photonSchema !== undefined && localSchema !== undefined) {
-      controller.debug('...found photon and its local version of PSL');
+      controller.debug('...found photon and its local version of PSL')
       if (photonSchema === localSchema) {
         controller.debug(
           "...found that its local PSL version matches user's current, will NOT regenerate photon"
-        );
-        return false;
+        )
+        return false
       } else {
         controller.debug(
           "...found that its local PSL version does not match user's current, WILL regenerate photon"
-        );
-        return true;
+        )
+        return true
       }
     } else {
       controller.debug(
         '...did not find generated photon package or its local copy of PSL'
-      );
-      return true;
+      )
+      return true
     }
   }
 
   async function scaffoldPhotonGeneratorBlock(schemaPath: string) {
-    const schemaPathAbs = path.relative(process.cwd(), schemaPath);
+    const schemaPathAbs = path.relative(process.cwd(), schemaPath)
     controller.log.warn(
       `A PhotonJS generator block is needed in your Prisma Schema at "${schemaPathAbs}".`
-    );
-    controller.log.warn('We scaffolded one for you.');
-    const schemaContent = await fs.readAsync(schemaPath)!;
+    )
+    controller.log.warn('We scaffolded one for you.')
+    const schemaContent = await fs.readAsync(schemaPath)!
     const generatorBlock = stripIndent`
       generator photon {
         provider = "photonjs"
       }
-    `;
-    await fs.writeAsync(schemaPath, `${generatorBlock}\n${schemaContent}`);
+    `
+    await fs.writeAsync(schemaPath, `${generatorBlock}\n${schemaContent}`)
   }
-});
+})
 
 /**
  * TODO ...
@@ -335,20 +335,20 @@ export default PumpkinsPlugin.create(controller => {
 function renderUnknownFieldNameError(params: UnknownFieldName) {
   const { stack, fileLineNumber } = printStack({
     callsite: params.error.stack,
-  });
+  })
   const suggestions = suggestionList(
     params.unknownFieldName,
     params.validFieldNames
-  ).map(s => chalk.green(s));
+  ).map(s => chalk.green(s))
   const suggestionMessage =
     suggestions.length === 0
       ? ''
       : chalk`{yellow Warning:} Did you mean ${suggestions
           .map(s => `"${s}"`)
-          .join(', ')} ?`;
-  const intro = chalk`{yellow Warning:} ${params.error.message}\n{yellow Warning:} in ${fileLineNumber}\n${suggestionMessage}`;
+          .join(', ')} ?`
+  const intro = chalk`{yellow Warning:} ${params.error.message}\n{yellow Warning:} in ${fileLineNumber}\n${suggestionMessage}`
 
-  console.log(`${intro}${stack}`);
+  console.log(`${intro}${stack}`)
 }
 
 /**
@@ -357,11 +357,11 @@ function renderUnknownFieldNameError(params: UnknownFieldName) {
 function renderUnknownFieldTypeError(params: UnknownFieldType) {
   const { stack, fileLineNumber } = printStack({
     callsite: params.error.stack,
-  });
+  })
 
-  const intro = chalk`{yellow Warning:} ${params.error.message}\n{yellow Warning:} in ${fileLineNumber}`;
+  const intro = chalk`{yellow Warning:} ${params.error.message}\n{yellow Warning:} in ${fileLineNumber}`
 
-  console.log(`${intro}${stack}`);
+  console.log(`${intro}${stack}`)
 }
 
 // /**
@@ -433,13 +433,13 @@ async function getGenerators(schemaPath: string) {
       outputPath: GENERATED_PHOTON_OUTPUT_PATH,
       generatorPath: require.resolve('@prisma/photon/generator-build'),
     },
-  };
+  }
 
   return await Prisma.getGenerators({
     schemaPath,
     printDownloadProgress: false,
     providerAliases: aliases,
-  });
+  })
 }
 
 /**
@@ -449,13 +449,13 @@ async function getGenerators(schemaPath: string) {
 function getGeneratorResolvedSettings(
   g: Prisma.Generator
 ): {
-  name: string;
-  instanceName: string;
-  output: string;
+  name: string
+  instanceName: string
+  output: string
 } {
   return {
     name: g.manifest?.prettyName ?? '',
     instanceName: g.options?.generator.name ?? '',
     output: g.options?.generator.output ?? g.manifest?.defaultOutput ?? '',
-  };
+  }
 }
