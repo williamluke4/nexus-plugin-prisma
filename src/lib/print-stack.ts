@@ -32,6 +32,7 @@ export const printStack = ({ callsite }: ErrorArgs): PrintStackResult => {
   let afterLines = '';
   let indentValue = 0;
 
+  // @ts-ignore
   if (callsite && typeof window === 'undefined') {
     const stack = stackTraceParser.parse(callsite);
     // TODO: more resilient logic to find the right trace
