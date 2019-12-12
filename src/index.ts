@@ -47,8 +47,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
 
     // create
 
-    hooks.create.onAfterScaffold = async () => {
-      // TODO augment package.json to include pumpkins-plugin-prisma
+    hooks.create.onAfterBaseSetup = async () => {
       await Promise.all([
         fs.writeAsync(
           'prisma/schema.prisma',
@@ -134,17 +133,18 @@ export const create = PumpkinsPlugin.create(pumpkins => {
           `
         ),
       ])
-    }
 
-    hooks.create.onAfterDepInstall = async () => {
-      pumpkins.utils.debug('initializing development database...')
+      pumpkins.utils.log.info('initializing development database...')
       // TODO expose run on pumpkins
       await pumpkins.utils.run(
         'yarn -s prisma2 lift save --create-db --name init'
       )
       await pumpkins.utils.run('yarn -s prisma2 lift up')
 
-      pumpkins.utils.debug('seeding data...')
+      pumpkins.utils.log.info('generating photon...')
+      await pumpkins.utils.run('yarn -s prisma2 generate')
+
+      pumpkins.utils.log.info('seeding development database...')
       await pumpkins.utils.run('yarn -s ts-node prisma/seed')
     }
 
