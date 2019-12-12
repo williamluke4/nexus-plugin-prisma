@@ -269,7 +269,11 @@ export const create = PumpkinsPlugin.create(pumpkins => {
   async function maybeFindPrismaSchema(): Promise<null | string> {
     // TODO ...base ignores from pumpkins... pumpkins.fs.findAsync?
     const schemaPaths = await fs.findAsync({
-      matching: ['schema.prisma', '!prisma/migrations/**/*'],
+      matching: [
+        'schema.prisma',
+        '!prisma/migrations/**/*',
+        '!node_modules/**/*',
+      ],
     })
 
     if (schemaPaths.length > 1) {
