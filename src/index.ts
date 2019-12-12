@@ -137,15 +137,18 @@ export const create = PumpkinsPlugin.create(pumpkins => {
       pumpkins.utils.log.info('initializing development database...')
       // TODO expose run on pumpkins
       await pumpkins.utils.run(
-        'yarn -s prisma2 lift save --create-db --name init'
+        'yarn -s prisma2 lift save --create-db --name init',
+        {
+          require: true,
+        }
       )
-      await pumpkins.utils.run('yarn -s prisma2 lift up')
+      await pumpkins.utils.run('yarn -s prisma2 lift up', { require: true })
 
       pumpkins.utils.log.info('generating photon...')
-      await pumpkins.utils.run('yarn -s prisma2 generate')
+      await pumpkins.utils.run('yarn -s prisma2 generate', { require: true })
 
       pumpkins.utils.log.info('seeding development database...')
-      await pumpkins.utils.run('yarn -s ts-node prisma/seed')
+      await pumpkins.utils.run('yarn -s ts-node prisma/seed', { require: true })
     }
 
     // generate
