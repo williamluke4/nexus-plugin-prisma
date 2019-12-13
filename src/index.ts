@@ -7,6 +7,7 @@ import { suggestionList } from './lib/levenstein'
 import { printStack } from './lib/print-stack'
 import { shouldGenerateArtifacts } from 'pumpkins/dist/framework/nexus'
 import * as PumpkinsPlugin from 'pumpkins/dist/framework/plugin'
+import { Layout } from 'pumpkins/dist/framework/layout'
 import { stripIndent } from 'common-tags'
 
 type UnknownFieldName = {
@@ -38,7 +39,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
     'node_modules/@types/typegen-nexus-prisma/index.d.ts'
   )
 
-  pumpkins.workflow((hooks, layout) => {
+  pumpkins.workflow((hooks, { layout }) => {
     // build
 
     hooks.build.onStart = async () => {
@@ -47,15 +48,24 @@ export const create = PumpkinsPlugin.create(pumpkins => {
 
     // create
 
-    hooks.create.onAfterBaseSetup = async () => {
+    hooks.create.onAfterBaseSetup = async hctx => {
+      if (hctx.database === undefined) {
+        throw new Error(
+          'Should never happen. Prisma plugin should not be installed if no database were chosen in the create workflow'
+        )
+      }
+
+      const datasource = renderDatasource({
+        database: hctx.database,
+        connectionURI: hctx.connectionURI,
+      })
+
       await Promise.all([
         fs.writeAsync(
           'prisma/schema.prisma',
-          stripIndent`
-            datasource db {
-              provider = "sqlite"
-              url      = "file:dev.db"
-            }
+          datasource +
+            '\n' +
+            stripIndent`
     
             generator photon {
               provider = "photonjs"
@@ -134,21 +144,47 @@ export const create = PumpkinsPlugin.create(pumpkins => {
         ),
       ])
 
-      pumpkins.utils.log.info('initializing development database...')
-      // TODO expose run on pumpkins
-      await pumpkins.utils.run(
-        'yarn -s prisma2 lift save --create-db --name init',
-        {
+      /**
+       * TODO: Remove that once we have the `.pumpkins.config.ts` file
+       */
+      let packageJson = await fs.readAsync('package.json', 'json')
+      if (packageJson.scripts.dev) {
+        packageJson.scripts.dev = `PUMPKINS_DATABASE_URL="${renderConnectionURI(
+          {
+            database: hctx.database,
+            connectionURI: hctx.connectionURI,
+          },
+          layout
+        )}" ${packageJson.scripts.dev}`
+        await fs.writeAsync('package.json', packageJson)
+      }
+
+      if (hctx.connectionURI || hctx.database === 'SQLite') {
+        pumpkins.utils.log.successBold('Initializing development database...')
+        // TODO expose run on pumpkins
+        await pumpkins.utils.run(
+          'yarn -s prisma2 lift save --create-db --name init',
+          {
+            require: true,
+          }
+        )
+        await pumpkins.utils.run('yarn -s prisma2 lift up', { require: true })
+
+        pumpkins.utils.log.info('Generating photon...')
+        await pumpkins.utils.run('yarn -s prisma2 generate', { require: true })
+
+        pumpkins.utils.log.info('Seeding development database...')
+        await pumpkins.utils.run('yarn -s ts-node prisma/seed', {
           require: true,
-        }
-      )
-      await pumpkins.utils.run('yarn -s prisma2 lift up', { require: true })
-
-      pumpkins.utils.log.info('generating photon...')
-      await pumpkins.utils.run('yarn -s prisma2 generate', { require: true })
-
-      pumpkins.utils.log.info('seeding development database...')
-      await pumpkins.utils.run('yarn -s ts-node prisma/seed', { require: true })
+        })
+      } else {
+        pumpkins.utils.log.info(stripIndent`
+        Please setup your ${hctx.database} and fill in the connection uri in your \`package.json\` file.
+        `)
+        pumpkins.utils.log.info(stripIndent`
+        Once done, run \`yarn dev\` to start working.
+        `)
+      }
     }
 
     // generate
@@ -280,8 +316,8 @@ export const create = PumpkinsPlugin.create(pumpkins => {
     })
 
     if (schemaPaths.length > 1) {
-      console.warn(
-        `Warning: we found multiple "schema.prisma" files in your project.\n${schemaPaths
+      pumpkins.utils.log.warn(
+        `We found multiple "schema.prisma" files in your project.\n${schemaPaths
           .map((p, i) => `- "${p}"${i === 0 ? ' (used by pumpkins)' : ''}`)
           .join('\n')}`
       )
@@ -447,7 +483,7 @@ function renderUnknownFieldTypeError(params: UnknownFieldType) {
  * Get the declared generator blocks in the user's PSL file
  */
 async function getGenerators(schemaPath: string) {
-  const aliases = {
+  const aliases: Prisma.ProviderAliases = {
     photonjs: {
       // HACK (see var declaration LOC)
       outputPath: GENERATED_PHOTON_OUTPUT_PATH,
@@ -478,4 +514,56 @@ function getGeneratorResolvedSettings(
     instanceName: g.options?.generator.name ?? '',
     output: g.options?.generator.output ?? g.manifest?.defaultOutput ?? '',
   }
+}
+
+type Database = Exclude<
+  PumpkinsPlugin.OnAfterBaseSetupLens['database'],
+  undefined
+>
+type ConnectionURI = PumpkinsPlugin.OnAfterBaseSetupLens['connectionURI']
+
+const DATABASE_TO_PRISMA_PROVIDER: Record<
+  Database,
+  'sqlite' | 'postgresql' | 'mysql'
+> = {
+  SQLite: 'sqlite',
+  MySQL: 'mysql',
+  PostgreSQL: 'postgresql',
+}
+
+function renderDatasource(db: {
+  database: Database
+  connectionURI: ConnectionURI
+}): string {
+  const provider = DATABASE_TO_PRISMA_PROVIDER[db.database]
+
+  return stripIndent`
+    datasource db {
+      provider = "${provider}"
+      url      = env("PUMPKINS_DATABASE_URL")
+    }`
+}
+
+const DATABASE_TO_CONNECTION_URI: Record<
+  Database,
+  (projectName: string) => string
+> = {
+  SQLite: _ => 'file://dev.db',
+  PostgreSQL: projectName =>
+    `postgresql://postgres:<password>@localhost:5432/${projectName}`,
+  MySQL: projectName => `mysql://root:<password>@localhost:3306/${projectName}`,
+}
+
+function renderConnectionURI(
+  db: {
+    database: Database
+    connectionURI: ConnectionURI
+  },
+  layout: Layout
+): string {
+  if (db.connectionURI) {
+    return db.connectionURI
+  }
+
+  return DATABASE_TO_CONNECTION_URI[db.database](layout.project.name)
 }

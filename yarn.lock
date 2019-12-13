@@ -6192,10 +6192,10 @@ pump@^3.0.0:
     end-of-stream "^1.1.0"
     once "^1.3.1"
 
-pumpkins@^0.0.0-master.5180c35:
-  version "0.0.0-master.5180c35"
-  resolved "https://registry.yarnpkg.com/pumpkins/-/pumpkins-0.0.0-master.5180c35.tgz#5e5fca7629c74bf3a93307ae9706be1f93a895ae"
-  integrity sha512-C5rpJSXcPbUnzxkEqw2hepXLVXhVcTl8nv28ylU2a2yQOKM2FXbYmF9loQuhYe+YLhFURm00FvNGHO+fbvS7gA==
+pumpkins@^0.0.0-master.641e677:
+  version "0.0.0-master.641e677"
+  resolved "https://registry.yarnpkg.com/pumpkins/-/pumpkins-0.0.0-master.641e677.tgz#15a8dd9b385ab62cbcdd454745a1754045f1567a"
+  integrity sha512-Ks0IvF4FjdOh98jb7vm/3IppOljXvEgGrjKQDSWbFHxrLuDR4wy318vhd7EEZnJxYE0KJ1ImHjbhwi7NnRdJzg==
   dependencies:
     apollo-server-express "^2.9.11"
     arg "^4.1.1"
@@ -6209,6 +6209,7 @@ pumpkins@^0.0.0-master.5180c35:
     ink "^2.5.0"
     ink-select-input "^3.1.2"
     nexus "^0.12.0-rc.5"
+    prompts "^2.3.0"
     react "^16.12.0"
     simple-git "^1.126.0"
     tree-kill "^1.2.1"
