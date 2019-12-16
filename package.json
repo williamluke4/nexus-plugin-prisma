@@ -15,7 +15,7 @@
     "test": "tsdx test",
     "lint": "tsdx lint",
     "publish:master": "[ \"$(git rev-parse --abbrev-ref HEAD)\" = \"master\" ] && yarn publish --tag master --no-git-tag-version --new-version \"0.0.0-master.$(git show -s head --format='%h')\" && git commit -am 'chore: version' && git push",
-    "publish:pr": "PR=$(hub pr show -f '%I') && yarn publish --tag pr.${PR} --no-git-tag-version --new-version \"0.0.0-pr.${PR}.$(git show -s head --format='%h')\" && git commit -am 'chore: version' && git push ",
+    "publish:pr": "PR=$(hub pr show -f '%I') && yarn publish --tag pr.${PR} --no-git-tag-version --new-version \"0.0.0-pr.${PR}.$(git show -s head --format='%h')\"",
     "prepack": "yarn -s build"
   },
   "peerDependencies": {
@@ -39,7 +39,7 @@
     "@types/jest": "^24.0.23",
     "@types/prismjs": "^1.16.0",
     "husky": "^3.1.0",
-    "pumpkins": "^0.0.0-master.641e677",
+    "pumpkins": "^0.0.0-master.fbf09dc",
     "tsdx": "^0.11.0",
     "tslib": "^1.10.0",
     "typescript": "^3.7.3"
