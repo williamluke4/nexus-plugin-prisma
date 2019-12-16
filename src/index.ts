@@ -148,13 +148,13 @@ export const create = PumpkinsPlugin.create(pumpkins => {
             export default createConfig({
               environments: {
                 development: {
-                  PUMPKINS_DATABASE_URL: ${renderConnectionURI(
+                  PUMPKINS_DATABASE_URL: "${renderConnectionURI(
                     {
                       database: hctx.database,
                       connectionURI: hctx.connectionURI,
                     },
                     layout
-                  )}
+                  )}"
                 }
               }
             })
