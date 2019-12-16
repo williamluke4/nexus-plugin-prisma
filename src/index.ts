@@ -78,7 +78,6 @@ export const create = PumpkinsPlugin.create(pumpkins => {
             }
           `
         ),
-
         fs.writeAsync(
           'prisma/seed.ts',
           stripIndent`
@@ -102,7 +101,6 @@ export const create = PumpkinsPlugin.create(pumpkins => {
             }
           `
         ),
-
         fs.writeAsync(
           layout.sourcePath('schema.ts'),
           stripIndent`
@@ -142,22 +140,27 @@ export const create = PumpkinsPlugin.create(pumpkins => {
             })
           `
         ),
-      ])
+        fs.writeAsync(
+          'pumpkins.config.ts',
+          stripIndent`
+            import { createConfig } from 'pumpkins'
 
-      /**
-       * TODO: Remove that once we have the `.pumpkins.config.ts` file
-       */
-      let packageJson = await fs.readAsync('package.json', 'json')
-      if (packageJson.scripts.dev) {
-        packageJson.scripts.dev = `PUMPKINS_DATABASE_URL="${renderConnectionURI(
-          {
-            database: hctx.database,
-            connectionURI: hctx.connectionURI,
-          },
-          layout
-        )}" ${packageJson.scripts.dev}`
-        await fs.writeAsync('package.json', packageJson)
-      }
+            export default createConfig({
+              environments: {
+                development: {
+                  PUMPKINS_DATABASE_URL: ${renderConnectionURI(
+                    {
+                      database: hctx.database,
+                      connectionURI: hctx.connectionURI,
+                    },
+                    layout
+                  )}
+                }
+              }
+            })
+        `
+        ),
+      ])
 
       if (hctx.connectionURI || hctx.database === 'SQLite') {
         pumpkins.utils.log.successBold('Initializing development database...')
