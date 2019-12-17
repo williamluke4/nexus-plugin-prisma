@@ -233,7 +233,8 @@ export const create = PumpkinsPlugin.create(pumpkins => {
       init: {
         onStart: async () => {
           const response = await packageManager.runBin(
-            'prisma2 lift save --name init --create-db'
+            'prisma2 lift save --name init --create-db',
+            { envAdditions: { FORCE_COLOR: 'true' } }
           )
 
           handleLiftResponse(
@@ -248,7 +249,8 @@ export const create = PumpkinsPlugin.create(pumpkins => {
           onStart: async hctx => {
             if (!hctx.force) {
               const previewResponse = await packageManager.runBin(
-                'prisma2 lift up --preview'
+                'prisma2 lift up --preview',
+                { envAdditions: { FORCE_COLOR: 'true' } }
               )
 
               if (
@@ -282,7 +284,9 @@ export const create = PumpkinsPlugin.create(pumpkins => {
             }
 
             console.log()
-            const response = await packageManager.runBin('prisma2 lift up')
+            const response = await packageManager.runBin('prisma2 lift up', {
+              envAdditions: { FORCE_COLOR: 'true' },
+            })
 
             handleLiftResponse(
               pumpkins,
@@ -293,11 +297,25 @@ export const create = PumpkinsPlugin.create(pumpkins => {
         },
         plan: {
           onStart: async hctx => {
-            const migrationName = hctx.migrationName
-              ? ` --name=${hctx.migrationName}`
-              : ''
+            let migrationName = hctx.migrationName
+
+            if (!migrationName) {
+              const inputMigration = await pumpkins.utils.prompt({
+                type: 'text',
+                name: 'name',
+                message: `Name of your migration`,
+                validate: (value: string) =>
+                  value.length > 0
+                    ? true
+                    : 'Your migration needs to have a least one character',
+              })
+
+              migrationName = inputMigration.name
+            }
+
             const response = await packageManager.runBin(
-              `prisma2 lift save${migrationName}`
+              `prisma2 lift save --name=${migrationName}`,
+              { envAdditions: { FORCE_COLOR: 'true' } }
             )
 
             handleLiftResponse(
@@ -309,7 +327,9 @@ export const create = PumpkinsPlugin.create(pumpkins => {
         },
         rollback: {
           onStart: async () => {
-            const response = await packageManager.runBin('prisma2 lift down')
+            const response = await packageManager.runBin('prisma2 lift down', {
+              envAdditions: { FORCE_COLOR: 'true' },
+            })
 
             handleLiftResponse(
               pumpkins,
@@ -690,8 +710,8 @@ function handleLiftResponse(
   if (response.stdout) {
     console.log(
       response.stdout
-        .replace('Lift', 'Pumpkins')
-        .replace('prisma2 lift up', 'pumpkins db migrate apply')
+        .replace(/Lift/g, 'Pumpkins')
+        .replace(/prisma2 lift up/g, 'pumpkins db migrate apply')
     )
   }
 
