@@ -712,6 +712,8 @@ function handleLiftResponse(
       response.stdout
         .replace(/Lift/g, 'Pumpkins')
         .replace(/prisma2 lift up/g, 'pumpkins db migrate apply')
+        .replace(/🏋️‍ lift up --preview/g, '')
+        .replace(/🏋️‍ lift up/g, '')
     )
   }
 
