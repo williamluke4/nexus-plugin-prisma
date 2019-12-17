@@ -45,6 +45,7 @@ const PROVIDER_ALIASES: Prisma.ProviderAliases = {
     generatorPath: require.resolve('@prisma/photon/generator-build'),
   },
 }
+const PRISMA_VERSION = require('../package.json').prisma.version
 
 export const create = PumpkinsPlugin.create(pumpkins => {
   const nexusPrismaTypegenOutput = fs.path(
@@ -634,6 +635,7 @@ async function getGenerators(schemaPath: string) {
     schemaPath,
     printDownloadProgress: false,
     providerAliases: PROVIDER_ALIASES,
+    version: PRISMA_VERSION,
   })
 }
 
@@ -798,6 +800,7 @@ async function startStudio(
       photonWorkerPath,
       photonGenerator: {
         providerAliases: PROVIDER_ALIASES,
+        version: PRISMA_VERSION,
       },
       schemaPath: getDatamodelPath(projectDir),
       reactAppDir: path.join(

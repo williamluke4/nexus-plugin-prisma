@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "dev": "tsdx watch",
-    "build": "tsdx build",
+    "build": "node build-scripts/update-hash.js && tsdx build",
     "test": "tsdx test",
     "lint": "tsdx lint",
     "publish:master": "[ \"$(git rev-parse --abbrev-ref HEAD)\" = \"master\" ] && yarn publish --tag master --no-git-tag-version --new-version \"0.0.0-master.$(git show -s head --format='%h')\" && git commit -am 'chore: version' && git push",
@@ -39,6 +39,8 @@
     "@types/jest": "^24.0.23",
     "@types/prismjs": "^1.16.0",
     "husky": "^3.1.0",
+    "node-fetch": "^2.6.0",
+    "prettier": "^1.19.1",
     "pumpkins": "^0.0.0-master.2adf1ca",
     "tsdx": "^0.11.0",
     "tslib": "^1.10.0",
@@ -63,5 +65,8 @@
       "@babel/plugin-proposal-optional-chaining",
       "@babel/plugin-proposal-nullish-coalescing-operator"
     ]
+  },
+  "prisma": {
+    "version": "3c4da1d6caa0c40a0210a346ec982c77f74e18c7"
   }
 }
