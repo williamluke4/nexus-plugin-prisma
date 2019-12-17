@@ -294,10 +294,10 @@ export const create = PumpkinsPlugin.create(pumpkins => {
         plan: {
           onStart: async hctx => {
             const migrationName = hctx.migrationName
-              ? `--name=${hctx.migrationName}`
+              ? ` --name=${hctx.migrationName}`
               : ''
             const response = await packageManager.runBin(
-              `prisma2 lift save ${migrationName}`
+              `prisma2 lift save${migrationName}`
             )
 
             handleLiftResponse(
