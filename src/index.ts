@@ -41,6 +41,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
   )
 
   pumpkins.workflow((hooks, { layout, packageManager }) => {
+    pumpkins.utils.debug('Running workflow...')
     // build
 
     hooks.build.onStart = async () => {
@@ -183,12 +184,15 @@ export const create = PumpkinsPlugin.create(pumpkins => {
         })
       } else {
         pumpkins.utils.log.info(stripIndent`
-          Please setup your ${hctx.database} and fill in the connection uri in your \`package.json\` file.
+          1. Please setup your ${hctx.database} and fill in the connection uri in your \`pumpkins.config.ts\` file.
         `)
         pumpkins.utils.log.info(stripIndent`
-          Once done, run \`${packageManager.renderRunScript(
-            'dev'
-          )}\` to start working.
+          2. Run \`${packageManager.renderRunScript(
+            'pumpkins db init'
+          )}\` to initialize your database.
+        `)
+        pumpkins.utils.log.info(stripIndent`
+          3. Run \`${packageManager.renderRunScript('dev')}\` to start working.
         `)
       }
     }
@@ -228,10 +232,9 @@ export const create = PumpkinsPlugin.create(pumpkins => {
 
     hooks.db = {
       init: {
-        onStart: async hctx => {
+        onStart: async () => {
           const response = await packageManager.runBin(
-            'prisma2 lift save --name init --create-db',
-            { envAdditions: hctx.secrets }
+            'prisma2 lift save --name init --create-db'
           )
 
           handleLiftResponse(
@@ -246,8 +249,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
           onStart: async hctx => {
             if (!hctx.force) {
               const previewResponse = await packageManager.runBin(
-                'prisma2 lift up --preview',
-                { envAdditions: hctx.secrets }
+                'prisma2 lift up --preview'
               )
 
               if (
@@ -272,9 +274,8 @@ export const create = PumpkinsPlugin.create(pumpkins => {
               }
             }
 
-            const response = await packageManager.runBin('prisma2 lift up', {
-              env: hctx.secrets,
-            })
+            console.log()
+            const response = await packageManager.runBin('prisma2 lift up')
 
             handleLiftResponse(
               pumpkins,
@@ -289,8 +290,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
               ? `--name=${hctx.migrationName}`
               : ''
             const response = await packageManager.runBin(
-              `prisma2 lift save ${migrationName}`,
-              { envAdditions: hctx.secrets }
+              `prisma2 lift save ${migrationName}`
             )
 
             handleLiftResponse(
@@ -301,10 +301,8 @@ export const create = PumpkinsPlugin.create(pumpkins => {
           },
         },
         rollback: {
-          onStart: async hctx => {
-            const response = await packageManager.runBin('prisma2 lift down', {
-              envAdditions: hctx.secrets,
-            })
+          onStart: async () => {
+            const response = await packageManager.runBin('prisma2 lift down')
 
             handleLiftResponse(
               pumpkins,
@@ -318,6 +316,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
   })
 
   pumpkins.runtime(() => {
+    pumpkins.utils.debug('Running runtime...')
     const { Photon } = require('@prisma/photon')
     const photon = new Photon()
 
