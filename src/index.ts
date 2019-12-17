@@ -145,7 +145,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
         fs.writeAsync(
           'pumpkins.config.ts',
           stripIndent`
-            import { createConfig } from 'pumpkins'
+            import { createConfig } from 'pumpkins/config'
 
             export default createConfig({
               environments: {
