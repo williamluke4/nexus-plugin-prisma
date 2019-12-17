@@ -229,8 +229,8 @@ export const create = PumpkinsPlugin.create(pumpkins => {
     hooks.db = {
       init: {
         onStart: async hctx => {
-          const response = await pumpkins.utils.run(
-            'yarn prisma2 lift save --name init --create-db',
+          const response = await packageManager.runBin(
+            'prisma2 lift save --name init --create-db',
             { envAdditions: hctx.secrets }
           )
 
@@ -245,8 +245,8 @@ export const create = PumpkinsPlugin.create(pumpkins => {
         apply: {
           onStart: async hctx => {
             if (!hctx.force) {
-              const previewResponse = await pumpkins.utils.run(
-                'yarn prisma2 lift up --preview',
+              const previewResponse = await packageManager.runBin(
+                'prisma2 lift up --preview',
                 { envAdditions: hctx.secrets }
               )
 
@@ -272,7 +272,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
               }
             }
 
-            const response = await pumpkins.utils.run('yarn prisma2 lift up', {
+            const response = await packageManager.runBin('prisma2 lift up', {
               env: hctx.secrets,
             })
 
@@ -288,8 +288,8 @@ export const create = PumpkinsPlugin.create(pumpkins => {
             const migrationName = hctx.migrationName
               ? `--name=${hctx.migrationName}`
               : ''
-            const response = await pumpkins.utils.run(
-              `yarn prisma2 lift save ${migrationName}`,
+            const response = await packageManager.runBin(
+              `prisma2 lift save ${migrationName}`,
               { envAdditions: hctx.secrets }
             )
 
@@ -302,10 +302,9 @@ export const create = PumpkinsPlugin.create(pumpkins => {
         },
         rollback: {
           onStart: async hctx => {
-            const response = await pumpkins.utils.run(
-              'yarn prisma2 lift down',
-              { envAdditions: hctx.secrets }
-            )
+            const response = await packageManager.runBin('prisma2 lift down', {
+              envAdditions: hctx.secrets,
+            })
 
             handleLiftResponse(
               pumpkins,
