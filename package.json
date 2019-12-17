@@ -1,6 +1,6 @@
 {
   "name": "pumpkins-plugin-prisma",
-  "version": "0.0.0-master.ff2926d",
+  "version": "0.0.0-master.19a7ab4",
   "license": "MIT",
   "author": "Jason Kuhrt",
   "main": "dist/index.js",
