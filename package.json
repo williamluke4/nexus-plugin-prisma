@@ -50,7 +50,7 @@
     "chalk": "^3.0.0",
     "common-tags": "^1.8.0",
     "fs-jetpack": "^2.2.3",
-    "nexus-prisma": "^0.6.1",
+    "nexus-prisma": "^0.6.2-next.3",
     "prisma2": "^2.0.0-preview018.1",
     "prismjs": "^1.17.1",
     "stacktrace-parser": "^0.1.8"
