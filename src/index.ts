@@ -39,7 +39,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
     'node_modules/@types/typegen-nexus-prisma/index.d.ts'
   )
 
-  pumpkins.workflow((hooks, { layout }) => {
+  pumpkins.workflow((hooks, { layout, packageManager }) => {
     // build
 
     hooks.build.onStart = async () => {
@@ -165,27 +165,29 @@ export const create = PumpkinsPlugin.create(pumpkins => {
       if (hctx.connectionURI || hctx.database === 'SQLite') {
         pumpkins.utils.log.successBold('Initializing development database...')
         // TODO expose run on pumpkins
-        await pumpkins.utils.run(
-          'yarn -s prisma2 lift save --create-db --name init',
+        await packageManager.runBin(
+          'prisma2 lift save --create-db --name init',
           {
             require: true,
           }
         )
-        await pumpkins.utils.run('yarn -s prisma2 lift up', { require: true })
+        await packageManager.runBin('prisma2 lift up', { require: true })
 
         pumpkins.utils.log.info('Generating photon...')
-        await pumpkins.utils.run('yarn -s prisma2 generate', { require: true })
+        await packageManager.runBin('prisma2 generate', { require: true })
 
         pumpkins.utils.log.info('Seeding development database...')
-        await pumpkins.utils.run('yarn -s ts-node prisma/seed', {
+        await packageManager.runBin('ts-node prisma/seed', {
           require: true,
         })
       } else {
         pumpkins.utils.log.info(stripIndent`
-        Please setup your ${hctx.database} and fill in the connection uri in your \`package.json\` file.
+          Please setup your ${hctx.database} and fill in the connection uri in your \`package.json\` file.
         `)
         pumpkins.utils.log.info(stripIndent`
-        Once done, run \`yarn dev\` to start working.
+          Once done, run \`${packageManager.renderRunScript(
+            'dev'
+          )}\` to start working.
         `)
       }
     }
