@@ -2896,6 +2896,11 @@ domutils@^2.0.0:
     domelementtype "^2.0.1"
     domhandler "^3.0.0"
 
+dotenv@^8.2.0:
+  version "8.2.0"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-8.2.0.tgz#97e619259ada750eea3e4ea3e26bceea5424b16a"
+  integrity sha512-8sJ78ElpbDJBHNeBzUbUVLsqKdccaa/BXF1uPTw3GrvQTBgrQrtObr2mUrE38vzYd8cEv+m/JBfDLioYcfXoaw==
+
 duplexer3@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/duplexer3/-/duplexer3-0.1.4.tgz#ee01dd1cac0ed3cbc7fdbea37dc0a8f1ce002ce2"
@@ -5999,10 +6004,10 @@ pump@^3.0.0:
     end-of-stream "^1.1.0"
     once "^1.3.1"
 
-pumpkins@0.0.0-master.616b82b:
-  version "0.0.0-master.616b82b"
-  resolved "https://registry.yarnpkg.com/pumpkins/-/pumpkins-0.0.0-master.616b82b.tgz#4c9496b113bdfaf665fea5452adf6fe743652a91"
-  integrity sha512-AdtQPeXIa/eoLIpvi0UMonT8sQ+CBGyWgXaWtPruJ4hlHC/stjLXdQyiRAdwrJ5twZmc54IwbUty83wjUDywZA==
+pumpkins@0.0.0-master.73592b4:
+  version "0.0.0-master.73592b4"
+  resolved "https://registry.yarnpkg.com/pumpkins/-/pumpkins-0.0.0-master.73592b4.tgz#b9cce6f9716c1e150ee94fde8c23215ec4d17d18"
+  integrity sha512-UuRR6t7cOeUGMxdUqyVPkVTOQh0/IcHpC6SAQpc1td1rdtyBihdPDNdU+4ujyChbpBBgRxDDtHP1jBsE1vPLyQ==
   dependencies:
     apollo-server-express "^2.9.11"
     arg "^4.1.1"
@@ -6011,6 +6016,7 @@ pumpkins@0.0.0-master.616b82b:
     codename "^0.0.6"
     common-tags "^1.8.0"
     debug "^4.1.1"
+    dotenv "^8.2.0"
     fs-jetpack "^2.2.3"
     graphql "^14.5.8"
     ink "^2.5.0"

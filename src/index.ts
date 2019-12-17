@@ -1,14 +1,15 @@
 import * as Prisma from '@prisma/sdk'
 import chalk from 'chalk'
+import { stripIndent } from 'common-tags'
 import * as fs from 'fs-jetpack'
 import { nexusPrismaPlugin, Options } from 'nexus-prisma'
 import * as path from 'path'
-import { suggestionList } from './lib/levenstein'
-import { printStack } from './lib/print-stack'
+import { Layout } from 'pumpkins/dist/framework/layout'
 import { shouldGenerateArtifacts } from 'pumpkins/dist/framework/nexus'
 import * as PumpkinsPlugin from 'pumpkins/dist/framework/plugin'
-import { Layout } from 'pumpkins/dist/framework/layout'
-import { stripIndent } from 'common-tags'
+import { SuccessfulRunResult } from 'pumpkins/dist/utils'
+import { suggestionList } from './lib/levenstein'
+import { printStack } from './lib/print-stack'
 
 type UnknownFieldName = {
   error: Error
@@ -223,6 +224,97 @@ export const create = PumpkinsPlugin.create(pumpkins => {
       // migrations folder too and we don't know how to achieve semantic "anywhere
       // but migrations folder"
       watchFilePatterns: ['./schema.prisma', './prisma/schema.prisma'],
+    }
+
+    hooks.db = {
+      init: {
+        onStart: async hctx => {
+          const response = await pumpkins.utils.run(
+            'yarn prisma2 lift save --name init --create-db',
+            { envAdditions: hctx.secrets }
+          )
+
+          handleLiftResponse(
+            pumpkins,
+            response,
+            'We could not initialize your database'
+          )
+        },
+      },
+      migrate: {
+        apply: {
+          onStart: async hctx => {
+            if (!hctx.force) {
+              const previewResponse = await pumpkins.utils.run(
+                'yarn prisma2 lift up --preview',
+                { envAdditions: hctx.secrets }
+              )
+
+              if (
+                !handleLiftResponse(
+                  pumpkins,
+                  previewResponse,
+                  'We could not run a dry-run of your migration'
+                )
+              ) {
+                return
+              }
+
+              const { confirm } = await pumpkins.utils.prompt({
+                type: 'confirm',
+                name: 'confirm',
+                message: 'Do you want to apply the above migration?',
+              })
+
+              if (!confirm) {
+                pumpkins.utils.log.info('Migration not applied.')
+                return
+              }
+            }
+
+            const response = await pumpkins.utils.run('yarn prisma2 lift up', {
+              env: hctx.secrets,
+            })
+
+            handleLiftResponse(
+              pumpkins,
+              response,
+              'We could not migrate your database'
+            )
+          },
+        },
+        plan: {
+          onStart: async hctx => {
+            const migrationName = hctx.migrationName
+              ? `--name=${hctx.migrationName}`
+              : ''
+            const response = await pumpkins.utils.run(
+              `yarn prisma2 lift save ${migrationName}`,
+              { envAdditions: hctx.secrets }
+            )
+
+            handleLiftResponse(
+              pumpkins,
+              response,
+              'We could not generate a migration file'
+            )
+          },
+        },
+        rollback: {
+          onStart: async hctx => {
+            const response = await pumpkins.utils.run(
+              'yarn prisma2 lift down',
+              { envAdditions: hctx.secrets }
+            )
+
+            handleLiftResponse(
+              pumpkins,
+              response,
+              'We could not rollback your migration'
+            )
+          },
+        },
+      },
     }
   })
 
@@ -571,4 +663,32 @@ function renderConnectionURI(
   }
 
   return DATABASE_TO_CONNECTION_URI[db.database](layout.project.name)
+}
+
+function handleLiftResponse(
+  pumpkins: PumpkinsPlugin.Lens,
+  response: SuccessfulRunResult,
+  message: string
+): boolean {
+  if (response.error || response.stderr) {
+    pumpkins.utils.log.error(message)
+
+    if (response.stderr) {
+      pumpkins.utils.log.error(response.stderr)
+    } else if (response.error?.stack) {
+      pumpkins.utils.log.error(response.error.stack)
+    }
+    return false
+  }
+
+  // HACK TODO: replace lift logs with pumpkins logs....
+  if (response.stdout) {
+    console.log(
+      response.stdout
+        .replace('Lift', 'Pumpkins')
+        .replace('prisma2 lift up', 'pumpkins db migrate apply')
+    )
+  }
+
+  return true
 }
