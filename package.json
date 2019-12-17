@@ -1,6 +1,6 @@
 {
   "name": "pumpkins-plugin-prisma",
-  "version": "0.0.0-master.ec045d1",
+  "version": "0.0.0-master.61692a3",
   "license": "MIT",
   "author": "Jason Kuhrt",
   "main": "dist/index.js",
@@ -41,7 +41,7 @@
     "husky": "^3.1.0",
     "node-fetch": "^2.6.0",
     "prettier": "^1.19.1",
-    "pumpkins": "^0.0.0-master.2adf1ca",
+    "pumpkins": "^0.0.0-master.16ffbe4",
     "tsdx": "^0.11.0",
     "tslib": "^1.10.0",
     "typescript": "^3.7.3"
