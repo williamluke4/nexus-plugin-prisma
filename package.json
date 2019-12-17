@@ -45,8 +45,11 @@
     "typescript": "^3.7.3"
   },
   "dependencies": {
-    "@prisma/photon": "^2.0.0-preview018.1",
-    "@prisma/sdk": "^0.0.99",
+    "@prisma/cli": "^0.1.29",
+    "@prisma/generator-helper": "^0.0.29",
+    "@prisma/lift": "^0.3.227",
+    "@prisma/photon": "^2.0.0-preview018.2",
+    "@prisma/sdk": "^0.0.100",
     "chalk": "^3.0.0",
     "common-tags": "^1.8.0",
     "fs-jetpack": "^2.2.3",

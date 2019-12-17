@@ -1,8 +1,12 @@
+import { getPlatform } from '@prisma/get-platform'
+import { getDatamodelPath } from '@prisma/lift/dist/utils/getDatamodelPath'
 import * as Prisma from '@prisma/sdk'
 import chalk from 'chalk'
 import { stripIndent } from 'common-tags'
 import * as fs from 'fs-jetpack'
+import getPort from 'get-port'
 import { nexusPrismaPlugin, Options } from 'nexus-prisma'
+import open from 'open'
 import * as path from 'path'
 import { Layout } from 'pumpkins/dist/framework/layout'
 import { shouldGenerateArtifacts } from 'pumpkins/dist/framework/nexus'
@@ -34,6 +38,13 @@ type OptionsWithHook = Options & {
 // 1. https://prisma-company.slack.com/archives/C8AKVD5HU/p1574267904197600
 // 2. https://prisma-company.slack.com/archives/CEYCG2MCN/p1574267824465700
 const GENERATED_PHOTON_OUTPUT_PATH = fs.path('node_modules/@prisma/photon')
+const PROVIDER_ALIASES: Prisma.ProviderAliases = {
+  photonjs: {
+    // HACK (see var declaration LOC)
+    outputPath: GENERATED_PHOTON_OUTPUT_PATH,
+    generatorPath: require.resolve('@prisma/photon/generator-build'),
+  },
+}
 
 export const create = PumpkinsPlugin.create(pumpkins => {
   const nexusPrismaTypegenOutput = fs.path(
@@ -339,6 +350,20 @@ export const create = PumpkinsPlugin.create(pumpkins => {
           },
         },
       },
+      ui: {
+        onStart: async hctx => {
+          const port = hctx.port ?? 5555
+          const studio = await startStudio(pumpkins, layout.projectRoot, port)
+
+          if (studio?.port) {
+            await open(`http://localhost:${studio.port}`)
+
+            pumpkins.utils.log.info(
+              `Studio started at http://localhost:${studio.port}`
+            )
+          }
+        },
+      },
     }
   })
 
@@ -605,18 +630,10 @@ function renderUnknownFieldTypeError(params: UnknownFieldType) {
  * Get the declared generator blocks in the user's PSL file
  */
 async function getGenerators(schemaPath: string) {
-  const aliases: Prisma.ProviderAliases = {
-    photonjs: {
-      // HACK (see var declaration LOC)
-      outputPath: GENERATED_PHOTON_OUTPUT_PATH,
-      generatorPath: require.resolve('@prisma/photon/generator-build'),
-    },
-  }
-
   return await Prisma.getGenerators({
     schemaPath,
     printDownloadProgress: false,
-    providerAliases: aliases,
+    providerAliases: PROVIDER_ALIASES,
   })
 }
 
@@ -719,4 +736,82 @@ function handleLiftResponse(
   }
 
   return true
+}
+
+async function startStudio(
+  pumpkins: PumpkinsPlugin.Lens,
+  projectDir: string,
+  port: number | undefined
+): Promise<{ port: number } | null> {
+  try {
+    const platform = await getPlatform()
+    const extension = platform === 'windows' ? '.exe' : ''
+
+    const pathCandidates = [
+      // ncc go home
+      // tslint:disable-next-line
+      path.join(
+        __dirname,
+        `../../@prisma/sdk/query-engine-${platform}${extension}`
+      ),
+    ]
+
+    const pathsExist = await Promise.all(
+      pathCandidates.map(async candidate => ({
+        exists: fs.exists(candidate),
+        path: candidate,
+      }))
+    )
+
+    const firstExistingPath = pathsExist.find(p => p.exists)
+
+    if (!firstExistingPath) {
+      throw new Error(
+        `Could not find any Prisma2 query-engine binary for Studio. Looked in ${pathCandidates.join(
+          ', '
+        )}`
+      )
+    }
+
+    const StudioServer = (await import('@prisma/studio-server')).default
+
+    let photonWorkerPath: string | undefined
+    try {
+      const studioTransport = require.resolve('@prisma/studio-transports')
+      photonWorkerPath = path.join(
+        path.dirname(studioTransport),
+        'photon-worker.js'
+      )
+    } catch (e) {
+      pumpkins.utils.log.error(e)
+      return null
+    }
+
+    if (!port) {
+      port = await getPort({ port: getPort.makeRange(5555, 5600) })
+    }
+
+    const instance = new StudioServer({
+      port,
+      debug: false,
+      binaryPath: firstExistingPath.path,
+      photonWorkerPath,
+      photonGenerator: {
+        providerAliases: PROVIDER_ALIASES,
+      },
+      schemaPath: getDatamodelPath(projectDir),
+      reactAppDir: path.join(
+        path.dirname(require.resolve('@prisma/studio/package.json')),
+        'build'
+      ),
+    })
+
+    await instance.start()
+
+    return { port }
+  } catch (e) {
+    pumpkins.utils.log.error(e)
+  }
+
+  return null
 }
