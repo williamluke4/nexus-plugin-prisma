@@ -261,6 +261,14 @@ export const create = PumpkinsPlugin.create(pumpkins => {
                 return
               }
 
+              if (
+                previewResponse.stdout?.includes(
+                  'All migrations are already applied'
+                )
+              ) {
+                return
+              }
+
               const { confirm } = await pumpkins.utils.prompt({
                 type: 'confirm',
                 name: 'confirm',
