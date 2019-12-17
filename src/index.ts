@@ -107,7 +107,6 @@ export const create = PumpkinsPlugin.create(pumpkins => {
           layout.sourcePath('schema.ts'),
           stripIndent`
             import { app } from "pumpkins"
-            import { stringArg } from "nexus"
     
             app.objectType({
               name: "World",
@@ -123,7 +122,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
                 t.field("hello", {
                   type: "World",
                   args: {
-                    world: stringArg({ required: false })
+                    world: app.stringArg({ required: false })
                   },
                   async resolve(_root, args, ctx) {
                     const worldToFindByName = args.world ?? 'Earth'
