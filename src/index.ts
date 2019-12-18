@@ -3,16 +3,15 @@ import * as Prisma from '@prisma/sdk'
 import chalk from 'chalk'
 import { stripIndent } from 'common-tags'
 import * as fs from 'fs-jetpack'
-import { nexusPrismaPlugin, Options } from 'nexus-prisma'
-import * as path from 'path'
-import { Layout } from 'graphql-santa/dist/framework/layout'
+import getPort from 'get-port'
 import { shouldGenerateArtifacts } from 'graphql-santa/dist/framework/nexus'
 import * as GraphQLSantaPlugin from 'graphql-santa/dist/framework/plugin'
 import { SuccessfulRunResult } from 'graphql-santa/dist/utils'
+import { nexusPrismaPlugin, Options } from 'nexus-prisma'
+import open from 'open'
+import * as path from 'path'
 import { suggestionList } from './lib/levenstein'
 import { printStack } from './lib/print-stack'
-import getPort from 'get-port'
-import open from 'open'
 
 type UnknownFieldName = {
   error: Error
@@ -44,7 +43,6 @@ const PROVIDER_ALIASES: Prisma.ProviderAliases = {
     generatorPath: require.resolve('@prisma/photon/generator-build'),
   },
 }
-const PRISMA_VERSION = require('../package.json').prisma.version
 
 export const create = GraphQLSantaPlugin.create(gqlSanta => {
   const nexusPrismaTypegenOutput = fs.path(
@@ -68,10 +66,13 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
         )
       }
 
-      const datasource = renderDatasource({
-        database: hctx.database,
-        connectionURI: hctx.connectionURI,
-      })
+      const datasource = renderDatasource(
+        {
+          database: hctx.database,
+          connectionURI: hctx.connectionURI,
+        },
+        layout.project.name
+      )
 
       await Promise.all([
         fs.writeAsync(
@@ -152,26 +153,6 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
             })
           `
         ),
-        fs.writeAsync(
-          'graphql-santa.config.ts',
-          stripIndent`
-            import { createConfig } from 'graphql-santa/config'
-
-            export default createConfig({
-              environments: {
-                development: {
-                  GRAPHQL_SANTA_DATABASE_URL: "${renderConnectionURI(
-                    {
-                      database: hctx.database,
-                      connectionURI: hctx.connectionURI,
-                    },
-                    layout
-                  )}"
-                }
-              }
-            })
-        `
-        ),
       ])
 
       if (hctx.connectionURI || hctx.database === 'SQLite') {
@@ -194,15 +175,26 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
         })
       } else {
         gqlSanta.utils.log.info(stripIndent`
-          1. Please setup your ${hctx.database} and fill in the connection uri in your \`graphql-santa.config.ts\` file.
+          1. Please setup your ${
+            hctx.database
+          } and fill in the connection uri in your \`${chalk.greenBright(
+          'prisma/schema.prisma'
+        )}\` file.
         `)
         gqlSanta.utils.log.info(stripIndent`
-          2. Run \`${packageManager.renderRunScript(
-            'graphql-santa db init'
+          2. Run \`${chalk.greenBright(
+            packageManager.renderRunScript('santa db init')
           )}\` to initialize your database.
         `)
         gqlSanta.utils.log.info(stripIndent`
-          3. Run \`${packageManager.renderRunScript('dev')}\` to start working.
+          3. Run \`${chalk.greenBright(
+            packageManager.renderRunScript('ts-node prisma/seed.ts')
+          )}\` to seed your database.
+        `)
+        gqlSanta.utils.log.info(stripIndent`
+          4. Run \`${chalk.greenBright(
+            packageManager.renderRunScript('dev')
+          )}\` to start working.
         `)
       }
     }
@@ -260,12 +252,15 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
               'prisma2 lift up --auto-approve',
               { envAdditions: { FORCE_COLOR: 'true' } }
             )
-
-            handleLiftResponse(
-              gqlSanta,
-              migrateResponse,
-              'We could not initialize your database'
-            )
+            if (
+              handleLiftResponse(
+                gqlSanta,
+                migrateResponse,
+                'We could not initialize your database'
+              )
+            ) {
+              await runPrismaGenerators({ silent: true })
+            }
           }
         },
       },
@@ -609,7 +604,6 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
         photonWorkerPath,
         photonGenerator: {
           providerAliases: PROVIDER_ALIASES,
-          version: PRISMA_VERSION,
         },
         schemaPath: schema,
         reactAppDir: path.join(
@@ -730,8 +724,6 @@ async function getGenerators(schemaPath: string) {
   return await Prisma.getGenerators({
     schemaPath,
     printDownloadProgress: false,
-    providerAliases: PROVIDER_ALIASES,
-    version: PRISMA_VERSION,
   })
 }
 
@@ -768,16 +760,19 @@ const DATABASE_TO_PRISMA_PROVIDER: Record<
   PostgreSQL: 'postgresql',
 }
 
-function renderDatasource(db: {
-  database: Database
-  connectionURI: ConnectionURI
-}): string {
+function renderDatasource(
+  db: {
+    database: Database
+    connectionURI: ConnectionURI
+  },
+  projectName: string
+): string {
   const provider = DATABASE_TO_PRISMA_PROVIDER[db.database]
 
   return stripIndent`
     datasource db {
       provider = "${provider}"
-      url      = env("GRAPHQL_SANTA_DATABASE_URL")
+      url      = "${renderConnectionURI(db, projectName)}"
     }`
 }
 
@@ -796,13 +791,13 @@ function renderConnectionURI(
     database: Database
     connectionURI: ConnectionURI
   },
-  layout: Layout
+  projectName: string
 ): string {
   if (db.connectionURI) {
     return db.connectionURI
   }
 
-  return DATABASE_TO_CONNECTION_URI[db.database](layout.project.name)
+  return DATABASE_TO_CONNECTION_URI[db.database](projectName)
 }
 
 function handleLiftResponse(
@@ -831,6 +826,7 @@ function handleLiftResponse(
         .replace(/🏋️‍ lift up --preview/g, '')
         .replace(/🏋️‍ lift up/g, '')
         .replace(/📼  lift save --name init/, '')
+        .replace(/To apply the migrations, run santa db migrate apply/g, '')
     )
   }
 
