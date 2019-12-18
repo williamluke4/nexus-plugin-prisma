@@ -1,12 +1,9 @@
 import { getPlatform } from '@prisma/get-platform'
-import { getDatamodelPath } from '@prisma/lift/dist/utils/getDatamodelPath'
 import * as Prisma from '@prisma/sdk'
 import chalk from 'chalk'
 import { stripIndent } from 'common-tags'
 import * as fs from 'fs-jetpack'
-import getPort from 'get-port'
 import { nexusPrismaPlugin, Options } from 'nexus-prisma'
-import open from 'open'
 import * as path from 'path'
 import { Layout } from 'graphql-santa/dist/framework/layout'
 import { shouldGenerateArtifacts } from 'graphql-santa/dist/framework/nexus'
@@ -14,6 +11,8 @@ import * as GraphQLSantaPlugin from 'graphql-santa/dist/framework/plugin'
 import { SuccessfulRunResult } from 'graphql-santa/dist/utils'
 import { suggestionList } from './lib/levenstein'
 import { printStack } from './lib/print-stack'
+import getPort from 'get-port'
+import open from 'open'
 
 type UnknownFieldName = {
   error: Error
@@ -244,16 +243,30 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
     hooks.db = {
       init: {
         onStart: async () => {
-          const response = await packageManager.runBin(
+          const initResponse = await packageManager.runBin(
             'prisma2 lift save --name init --create-db',
             { envAdditions: { FORCE_COLOR: 'true' } }
           )
 
-          handleLiftResponse(
-            gqlSanta,
-            response,
-            'We could not initialize your database'
-          )
+          if (
+            handleLiftResponse(
+              gqlSanta,
+              initResponse,
+              'We could not initialize your database',
+              { silentStdout: true }
+            )
+          ) {
+            const migrateResponse = await packageManager.runBin(
+              'prisma2 lift up --auto-approve',
+              { envAdditions: { FORCE_COLOR: 'true' } }
+            )
+
+            handleLiftResponse(
+              gqlSanta,
+              migrateResponse,
+              'We could not initialize your database'
+            )
+          }
         },
       },
       migrate: {
@@ -354,11 +367,10 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
       ui: {
         onStart: async hctx => {
           const port = hctx.port ?? 5555
-          const studio = await startStudio(gqlSanta, layout.projectRoot, port)
+          const studio = await startStudio(port)
 
           if (studio?.port) {
             await open(`http://localhost:${studio.port}`)
-
             gqlSanta.utils.log.info(
               `Studio started at http://localhost:${studio.port}`
             )
@@ -530,6 +542,90 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
       }
     `
     await fs.writeAsync(schemaPath, `${generatorBlock}\n${schemaContent}`)
+  }
+
+  async function startStudio(
+    port: number | undefined
+  ): Promise<{ port: number } | null> {
+    try {
+      const platform = await getPlatform()
+      const extension = platform === 'windows' ? '.exe' : ''
+
+      const pathCandidates = [
+        // ncc go home
+        // tslint:disable-next-line
+        path.join(
+          __dirname,
+          `../../@prisma/sdk/query-engine-${platform}${extension}`
+        ),
+      ]
+
+      const pathsExist = await Promise.all(
+        pathCandidates.map(async candidate => ({
+          exists: fs.exists(candidate),
+          path: candidate,
+        }))
+      )
+
+      const firstExistingPath = pathsExist.find(p => p.exists)
+
+      if (!firstExistingPath) {
+        throw new Error(
+          `Could not find any Prisma2 query-engine binary for Studio. Looked in ${pathCandidates.join(
+            ', '
+          )}`
+        )
+      }
+
+      const StudioServer = (await import('@prisma/studio-server')).default
+
+      let photonWorkerPath: string | undefined
+      try {
+        const studioTransport = require.resolve('@prisma/studio-transports')
+        photonWorkerPath = path.join(
+          path.dirname(studioTransport),
+          'photon-worker.js'
+        )
+      } catch (e) {
+        gqlSanta.utils.log.error(e)
+        return null
+      }
+
+      if (!port) {
+        port = await getPort({ port: getPort.makeRange(5555, 5600) })
+      }
+
+      const schema = await maybeFindPrismaSchema()
+
+      if (!schema) {
+        gqlSanta.utils.log.error('We could not find your schema.prisma file')
+        return null
+      }
+
+      const instance = new StudioServer({
+        port,
+        debug: false,
+        binaryPath: firstExistingPath.path,
+        photonWorkerPath,
+        photonGenerator: {
+          providerAliases: PROVIDER_ALIASES,
+          version: PRISMA_VERSION,
+        },
+        schemaPath: schema,
+        reactAppDir: path.join(
+          path.dirname(require.resolve('@prisma/studio/package.json')),
+          'build'
+        ),
+      })
+
+      await instance.start()
+
+      return { port }
+    } catch (e) {
+      gqlSanta.utils.log.error(e)
+    }
+
+    return null
   }
 })
 
@@ -712,7 +808,8 @@ function renderConnectionURI(
 function handleLiftResponse(
   gqlSanta: GraphQLSantaPlugin.Lens,
   response: SuccessfulRunResult,
-  message: string
+  message: string,
+  options: { silentStdout: boolean } = { silentStdout: false }
 ): boolean {
   if (response.error || response.stderr) {
     gqlSanta.utils.log.error(message)
@@ -726,11 +823,11 @@ function handleLiftResponse(
   }
 
   // HACK TODO: replace lift logs with graphql-santa logs....
-  if (response.stdout) {
+  if (response.stdout && !options.silentStdout) {
     console.log(
       response.stdout
         .replace(/Lift/g, 'graphql-santa')
-        .replace(/prisma2 lift up/g, 'graphql-santa db migrate apply')
+        .replace(/prisma2 lift up/g, 'santa db migrate apply')
         .replace(/🏋️‍ lift up --preview/g, '')
         .replace(/🏋️‍ lift up/g, '')
         .replace(/📼  lift save --name init/, '')
@@ -738,83 +835,4 @@ function handleLiftResponse(
   }
 
   return true
-}
-
-async function startStudio(
-  gqlSanta: GraphQLSantaPlugin.Lens,
-  projectDir: string,
-  port: number | undefined
-): Promise<{ port: number } | null> {
-  try {
-    const platform = await getPlatform()
-    const extension = platform === 'windows' ? '.exe' : ''
-
-    const pathCandidates = [
-      // ncc go home
-      // tslint:disable-next-line
-      path.join(
-        __dirname,
-        `../../@prisma/sdk/query-engine-${platform}${extension}`
-      ),
-    ]
-
-    const pathsExist = await Promise.all(
-      pathCandidates.map(async candidate => ({
-        exists: fs.exists(candidate),
-        path: candidate,
-      }))
-    )
-
-    const firstExistingPath = pathsExist.find(p => p.exists)
-
-    if (!firstExistingPath) {
-      throw new Error(
-        `Could not find any Prisma2 query-engine binary for Studio. Looked in ${pathCandidates.join(
-          ', '
-        )}`
-      )
-    }
-
-    const StudioServer = (await import('@prisma/studio-server')).default
-
-    let photonWorkerPath: string | undefined
-    try {
-      const studioTransport = require.resolve('@prisma/studio-transports')
-      photonWorkerPath = path.join(
-        path.dirname(studioTransport),
-        'photon-worker.js'
-      )
-    } catch (e) {
-      gqlSanta.utils.log.error(e)
-      return null
-    }
-
-    if (!port) {
-      port = await getPort({ port: getPort.makeRange(5555, 5600) })
-    }
-
-    const instance = new StudioServer({
-      port,
-      debug: false,
-      binaryPath: firstExistingPath.path,
-      photonWorkerPath,
-      photonGenerator: {
-        providerAliases: PROVIDER_ALIASES,
-        version: PRISMA_VERSION,
-      },
-      schemaPath: getDatamodelPath(projectDir),
-      reactAppDir: path.join(
-        path.dirname(require.resolve('@prisma/studio/package.json')),
-        'build'
-      ),
-    })
-
-    await instance.start()
-
-    return { port }
-  } catch (e) {
-    gqlSanta.utils.log.error(e)
-  }
-
-  return null
 }
