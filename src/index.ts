@@ -8,10 +8,10 @@ import getPort from 'get-port'
 import { nexusPrismaPlugin, Options } from 'nexus-prisma'
 import open from 'open'
 import * as path from 'path'
-import { Layout } from 'pumpkins/dist/framework/layout'
-import { shouldGenerateArtifacts } from 'pumpkins/dist/framework/nexus'
-import * as PumpkinsPlugin from 'pumpkins/dist/framework/plugin'
-import { SuccessfulRunResult } from 'pumpkins/dist/utils'
+import { Layout } from 'graphql-santa/dist/framework/layout'
+import { shouldGenerateArtifacts } from 'graphql-santa/dist/framework/nexus'
+import * as GraphQLSantaPlugin from 'graphql-santa/dist/framework/plugin'
+import { SuccessfulRunResult } from 'graphql-santa/dist/utils'
 import { suggestionList } from './lib/levenstein'
 import { printStack } from './lib/print-stack'
 
@@ -47,13 +47,13 @@ const PROVIDER_ALIASES: Prisma.ProviderAliases = {
 }
 const PRISMA_VERSION = require('../package.json').prisma.version
 
-export const create = PumpkinsPlugin.create(pumpkins => {
+export const create = GraphQLSantaPlugin.create(gqlSanta => {
   const nexusPrismaTypegenOutput = fs.path(
     'node_modules/@types/typegen-nexus-prisma/index.d.ts'
   )
 
-  pumpkins.workflow((hooks, { layout, packageManager }) => {
-    pumpkins.utils.debug('Running workflow...')
+  gqlSanta.workflow((hooks, { layout, packageManager }) => {
+    gqlSanta.utils.debug('Running workflow...')
     // build
 
     hooks.build.onStart = async () => {
@@ -118,7 +118,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
         fs.writeAsync(
           layout.sourcePath('schema.ts'),
           stripIndent`
-            import { app } from "pumpkins"
+            import { app } from "graphql-santa"
     
             app.objectType({
               name: "World",
@@ -154,14 +154,14 @@ export const create = PumpkinsPlugin.create(pumpkins => {
           `
         ),
         fs.writeAsync(
-          'pumpkins.config.ts',
+          'graphql-santa.config.ts',
           stripIndent`
-            import { createConfig } from 'pumpkins/config'
+            import { createConfig } from 'graphql-santa/config'
 
             export default createConfig({
               environments: {
                 development: {
-                  PUMPKINS_DATABASE_URL: "${renderConnectionURI(
+                  GRAPHQL_SANTA_DATABASE_URL: "${renderConnectionURI(
                     {
                       database: hctx.database,
                       connectionURI: hctx.connectionURI,
@@ -176,8 +176,8 @@ export const create = PumpkinsPlugin.create(pumpkins => {
       ])
 
       if (hctx.connectionURI || hctx.database === 'SQLite') {
-        pumpkins.utils.log.successBold('Initializing development database...')
-        // TODO expose run on pumpkins
+        gqlSanta.utils.log.successBold('Initializing development database...')
+        // TODO expose run on graphql-santa
         await packageManager.runBin(
           'prisma2 lift save --create-db --name init',
           {
@@ -186,23 +186,23 @@ export const create = PumpkinsPlugin.create(pumpkins => {
         )
         await packageManager.runBin('prisma2 lift up', { require: true })
 
-        pumpkins.utils.log.info('Generating photon...')
+        gqlSanta.utils.log.info('Generating photon...')
         await packageManager.runBin('prisma2 generate', { require: true })
 
-        pumpkins.utils.log.info('Seeding development database...')
+        gqlSanta.utils.log.info('Seeding development database...')
         await packageManager.runBin('ts-node prisma/seed', {
           require: true,
         })
       } else {
-        pumpkins.utils.log.info(stripIndent`
-          1. Please setup your ${hctx.database} and fill in the connection uri in your \`pumpkins.config.ts\` file.
+        gqlSanta.utils.log.info(stripIndent`
+          1. Please setup your ${hctx.database} and fill in the connection uri in your \`graphql-santa.config.ts\` file.
         `)
-        pumpkins.utils.log.info(stripIndent`
+        gqlSanta.utils.log.info(stripIndent`
           2. Run \`${packageManager.renderRunScript(
-            'pumpkins db init'
+            'graphql-santa db init'
           )}\` to initialize your database.
         `)
-        pumpkins.utils.log.info(stripIndent`
+        gqlSanta.utils.log.info(stripIndent`
           3. Run \`${packageManager.renderRunScript('dev')}\` to start working.
         `)
       }
@@ -222,15 +222,15 @@ export const create = PumpkinsPlugin.create(pumpkins => {
 
     hooks.dev.onFileWatcherEvent = (_event, file) => {
       if (file.match(/.*schema\.prisma$/)) {
-        pumpkins.utils.log.info(
+        gqlSanta.utils.log.info(
           chalk`Prisma Schema change detected, lifting...`
         )
         // Raw code being run is this https://github.com/prisma/lift/blob/dce60fe2c44e8a0d951d961187aec95a50a33c6f/src/cli/commands/LiftTmpPrepare.ts#L33-L45
-        pumpkins.utils.debug('running lift...')
-        const result = pumpkins.utils.run('prisma2 tmp-prepare', {
+        gqlSanta.utils.debug('running lift...')
+        const result = gqlSanta.utils.run('prisma2 tmp-prepare', {
           require: true,
         })
-        pumpkins.utils.debug('done %O', result)
+        gqlSanta.utils.debug('done %O', result)
       }
     }
 
@@ -250,7 +250,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
           )
 
           handleLiftResponse(
-            pumpkins,
+            gqlSanta,
             response,
             'We could not initialize your database'
           )
@@ -267,7 +267,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
 
               if (
                 !handleLiftResponse(
-                  pumpkins,
+                  gqlSanta,
                   previewResponse,
                   'We could not run a dry-run of your migration'
                 )
@@ -283,14 +283,14 @@ export const create = PumpkinsPlugin.create(pumpkins => {
                 return
               }
 
-              const { confirm } = await pumpkins.utils.prompt({
+              const { confirm } = await gqlSanta.utils.prompt({
                 type: 'confirm',
                 name: 'confirm',
                 message: 'Do you want to apply the above migration?',
               })
 
               if (!confirm) {
-                pumpkins.utils.log.info('Migration not applied.')
+                gqlSanta.utils.log.info('Migration not applied.')
                 return
               }
             }
@@ -301,7 +301,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
             })
 
             handleLiftResponse(
-              pumpkins,
+              gqlSanta,
               response,
               'We could not migrate your database'
             )
@@ -312,7 +312,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
             let migrationName = hctx.migrationName
 
             if (!migrationName) {
-              const inputMigration = await pumpkins.utils.prompt({
+              const inputMigration = await gqlSanta.utils.prompt({
                 type: 'text',
                 name: 'name',
                 message: `Name of your migration`,
@@ -331,7 +331,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
             )
 
             handleLiftResponse(
-              pumpkins,
+              gqlSanta,
               response,
               'We could not generate a migration file'
             )
@@ -344,7 +344,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
             })
 
             handleLiftResponse(
-              pumpkins,
+              gqlSanta,
               response,
               'We could not rollback your migration'
             )
@@ -354,12 +354,12 @@ export const create = PumpkinsPlugin.create(pumpkins => {
       ui: {
         onStart: async hctx => {
           const port = hctx.port ?? 5555
-          const studio = await startStudio(pumpkins, layout.projectRoot, port)
+          const studio = await startStudio(gqlSanta, layout.projectRoot, port)
 
           if (studio?.port) {
             await open(`http://localhost:${studio.port}`)
 
-            pumpkins.utils.log.info(
+            gqlSanta.utils.log.info(
               `Studio started at http://localhost:${studio.port}`
             )
           }
@@ -368,8 +368,8 @@ export const create = PumpkinsPlugin.create(pumpkins => {
     }
   })
 
-  pumpkins.runtime(() => {
-    pumpkins.utils.debug('Running runtime...')
+  gqlSanta.runtime(() => {
+    gqlSanta.utils.debug('Running runtime...')
     const { Photon } = require('@prisma/photon')
     const photon = new Photon()
 
@@ -417,14 +417,14 @@ export const create = PumpkinsPlugin.create(pumpkins => {
 
     // TODO Do not assume that just because photon does not need to be regenerated that no other generators do
     if ((await shouldRegeneratePhoton(schemaPath)) === false) {
-      pumpkins.utils.debug(
+      gqlSanta.utils.debug(
         'Prisma generators were not run because the prisma schema was not updated'
       )
       return
     }
 
     if (!options.silent) {
-      pumpkins.utils.log.info('Running Prisma generators ...')
+      gqlSanta.utils.log.info('Running Prisma generators ...')
     }
 
     let generators = await getGenerators(schemaPath)
@@ -438,7 +438,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
     for (const g of generators) {
       const resolvedSettings = getGeneratorResolvedSettings(g)
 
-      pumpkins.utils.debug(
+      gqlSanta.utils.debug(
         'generating %s instance %s to %s',
         resolvedSettings.name,
         resolvedSettings.instanceName,
@@ -454,7 +454,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
    * Find the PSL file in the project. If multiple are found a warning is logged.
    */
   async function maybeFindPrismaSchema(): Promise<null | string> {
-    // TODO ...base ignores from pumpkins... pumpkins.fs.findAsync?
+    // TODO ...base ignores from graphql-santa... graphql-santa.fs.findAsync?
     const schemaPaths = await fs.findAsync({
       matching: [
         'schema.prisma',
@@ -464,9 +464,9 @@ export const create = PumpkinsPlugin.create(pumpkins => {
     })
 
     if (schemaPaths.length > 1) {
-      pumpkins.utils.log.warn(
+      gqlSanta.utils.log.warn(
         `We found multiple "schema.prisma" files in your project.\n${schemaPaths
-          .map((p, i) => `- "${p}"${i === 0 ? ' (used by pumpkins)' : ''}`)
+          .map((p, i) => `- "${p}"${i === 0 ? ' (used by graphql-santa)' : ''}`)
           .join('\n')}`
       )
     }
@@ -485,7 +485,7 @@ export const create = PumpkinsPlugin.create(pumpkins => {
       'schema.prisma'
     )
 
-    pumpkins.utils.debug(
+    gqlSanta.utils.debug(
       "checking if photon needs to be regenerated by comparing users PSL to photon's local copy...\n%s\n%s",
       photonSchemaPath,
       localSchemaPath
@@ -497,20 +497,20 @@ export const create = PumpkinsPlugin.create(pumpkins => {
     ])
 
     if (photonSchema !== undefined && localSchema !== undefined) {
-      pumpkins.utils.debug('...found photon and its local version of PSL')
+      gqlSanta.utils.debug('...found photon and its local version of PSL')
       if (photonSchema === localSchema) {
-        pumpkins.utils.debug(
+        gqlSanta.utils.debug(
           "...found that its local PSL version matches user's current, will NOT regenerate photon"
         )
         return false
       } else {
-        pumpkins.utils.debug(
+        gqlSanta.utils.debug(
           "...found that its local PSL version does not match user's current, WILL regenerate photon"
         )
         return true
       }
     } else {
-      pumpkins.utils.debug(
+      gqlSanta.utils.debug(
         '...did not find generated photon package or its local copy of PSL'
       )
       return true
@@ -519,10 +519,10 @@ export const create = PumpkinsPlugin.create(pumpkins => {
 
   async function scaffoldPhotonGeneratorBlock(schemaPath: string) {
     const schemaPathAbs = path.relative(process.cwd(), schemaPath)
-    pumpkins.utils.log.warn(
+    gqlSanta.utils.log.warn(
       `A PhotonJS generator block is needed in your Prisma Schema at "${schemaPathAbs}".`
     )
-    pumpkins.utils.log.warn('We scaffolded one for you.')
+    gqlSanta.utils.log.warn('We scaffolded one for you.')
     const schemaContent = await fs.readAsync(schemaPath)!
     const generatorBlock = stripIndent`
       generator photon {
@@ -584,11 +584,11 @@ function renderUnknownFieldTypeError(params: UnknownFieldType) {
 //   const schemaPath = await maybeFindPrismaSchema();
 
 //   if (schemaPath === null) {
-//     pumpkins.utils.debug('detected that this is not prisma framework project');
+//     graphql-santa.utils.debug('detected that this is not prisma framework project');
 //     return { enabled: false };
 //   }
 
-//   pumpkins.utils.debug('detected that this is a prisma framework project');
+//   graphql-santa.utils.debug('detected that this is a prisma framework project');
 //   return { enabled: true, schemaPath: fs.path(schemaPath) };
 // }
 
@@ -613,17 +613,17 @@ function renderUnknownFieldTypeError(params: UnknownFieldType) {
 //   if (schemaPaths.length > 1) {
 //     console.warn(
 //       `Warning: we found multiple "schema.prisma" files in your project.\n${schemaPaths
-//         .map((p, i) => `- \"${p}\"${i === 0 ? ' (used by pumpkins)' : ''}`)
+//         .map((p, i) => `- \"${p}\"${i === 0 ? ' (used by graphql-santa)' : ''}`)
 //         .join('\n')}`
 //     );
 //   }
 
 //   if (schemaPaths.length === 0) {
-//     pumpkins.utils.debug('detected that this is not prisma framework project');
+//     graphql-santa.utils.debug('detected that this is not prisma framework project');
 //     return { enabled: false };
 //   }
 
-//   pumpkins.utils.debug('detected that this is a prisma framework project');
+//   graphql-santa.utils.debug('detected that this is a prisma framework project');
 //   return { enabled: true, schemaPath: fs.path(schemaPaths[0]) };
 // }
 
@@ -658,10 +658,10 @@ function getGeneratorResolvedSettings(
 }
 
 type Database = Exclude<
-  PumpkinsPlugin.OnAfterBaseSetupLens['database'],
+  GraphQLSantaPlugin.OnAfterBaseSetupLens['database'],
   undefined
 >
-type ConnectionURI = PumpkinsPlugin.OnAfterBaseSetupLens['connectionURI']
+type ConnectionURI = GraphQLSantaPlugin.OnAfterBaseSetupLens['connectionURI']
 
 const DATABASE_TO_PRISMA_PROVIDER: Record<
   Database,
@@ -681,7 +681,7 @@ function renderDatasource(db: {
   return stripIndent`
     datasource db {
       provider = "${provider}"
-      url      = env("PUMPKINS_DATABASE_URL")
+      url      = env("GRAPHQL_SANTA_DATABASE_URL")
     }`
 }
 
@@ -710,27 +710,27 @@ function renderConnectionURI(
 }
 
 function handleLiftResponse(
-  pumpkins: PumpkinsPlugin.Lens,
+  gqlSanta: GraphQLSantaPlugin.Lens,
   response: SuccessfulRunResult,
   message: string
 ): boolean {
   if (response.error || response.stderr) {
-    pumpkins.utils.log.error(message)
+    gqlSanta.utils.log.error(message)
 
     if (response.stderr) {
-      pumpkins.utils.log.error(response.stderr)
+      gqlSanta.utils.log.error(response.stderr)
     } else if (response.error?.stack) {
-      pumpkins.utils.log.error(response.error.stack)
+      gqlSanta.utils.log.error(response.error.stack)
     }
     return false
   }
 
-  // HACK TODO: replace lift logs with pumpkins logs....
+  // HACK TODO: replace lift logs with graphql-santa logs....
   if (response.stdout) {
     console.log(
       response.stdout
-        .replace(/Lift/g, 'Pumpkins')
-        .replace(/prisma2 lift up/g, 'pumpkins db migrate apply')
+        .replace(/Lift/g, 'graphql-santa')
+        .replace(/prisma2 lift up/g, 'graphql-santa db migrate apply')
         .replace(/🏋️‍ lift up --preview/g, '')
         .replace(/🏋️‍ lift up/g, '')
         .replace(/📼  lift save --name init/, '')
@@ -741,7 +741,7 @@ function handleLiftResponse(
 }
 
 async function startStudio(
-  pumpkins: PumpkinsPlugin.Lens,
+  gqlSanta: GraphQLSantaPlugin.Lens,
   projectDir: string,
   port: number | undefined
 ): Promise<{ port: number } | null> {
@@ -785,7 +785,7 @@ async function startStudio(
         'photon-worker.js'
       )
     } catch (e) {
-      pumpkins.utils.log.error(e)
+      gqlSanta.utils.log.error(e)
       return null
     }
 
@@ -813,7 +813,7 @@ async function startStudio(
 
     return { port }
   } catch (e) {
-    pumpkins.utils.log.error(e)
+    gqlSanta.utils.log.error(e)
   }
 
   return null

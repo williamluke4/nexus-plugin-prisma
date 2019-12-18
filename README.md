@@ -1,1 +1,1 @@
-# pumpkins-plugin-prisma
+# graphql-santa-plugin-prisma

@@ -1,5 +1,5 @@
 {
-  "name": "pumpkins-plugin-prisma",
+  "name": "graphql-santa-plugin-prisma",
   "version": "0.0.0-master.61692a3",
   "license": "MIT",
   "author": "Jason Kuhrt",
@@ -19,7 +19,7 @@
     "prepack": "yarn -s build"
   },
   "peerDependencies": {
-    "pumpkins": "master"
+    "graphql-santa": "master"
   },
   "husky": {
     "hooks": {
@@ -38,10 +38,10 @@
     "@types/common-tags": "^1.8.0",
     "@types/jest": "^24.0.23",
     "@types/prismjs": "^1.16.0",
+    "graphql-santa": "^0.0.0-master.2e3ff58",
     "husky": "^3.1.0",
     "node-fetch": "^2.6.0",
     "prettier": "^1.19.1",
-    "pumpkins": "^0.0.0-master.16ffbe4",
     "tsdx": "^0.11.0",
     "tslib": "^1.10.0",
     "typescript": "^3.7.3"
