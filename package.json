@@ -1,6 +1,6 @@
 {
   "name": "graphql-santa-plugin-prisma",
-  "version": "0.0.0-master.61692a3",
+  "version": "0.0.0-master.5ee4558",
   "license": "MIT",
   "author": "Jason Kuhrt",
   "main": "dist/index.js",
