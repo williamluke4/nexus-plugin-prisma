@@ -18,9 +18,7 @@
     "publish:pr": "PR=$(hub pr show -f '%I') && yarn publish --tag pr.${PR} --no-git-tag-version --new-version \"0.0.0-pr.${PR}.$(git show -s head --format='%h')\" && git checkout package.json",
     "prepack": "yarn -s build"
   },
-  "peerDependencies": {
-    "graphql-santa": "master"
-  },
+  "peerDependencies": {},
   "husky": {
     "hooks": {
       "pre-commit": "tsdx lint"
@@ -36,7 +34,7 @@
     "@types/common-tags": "^1.8.0",
     "@types/jest": "^24.0.24",
     "@types/prismjs": "^1.16.0",
-    "graphql-santa": "^0.0.0-master.2e3ff58",
+    "graphql-santa": "^0.1.0",
     "husky": "^3.1.0",
     "node-fetch": "^2.6.0",
     "prettier": "^1.19.1",
