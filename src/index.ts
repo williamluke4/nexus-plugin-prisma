@@ -75,19 +75,26 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
       )
 
       await Promise.all([
+        fs.appendAsync(
+          '.gitignore',
+          '\n' +
+            stripIndent`
+              # Prisma
+              failed-inferMigrationSteps*
+            `
+        ),
         fs.writeAsync(
           'prisma/schema.prisma',
           datasource +
             '\n' +
             stripIndent`
-    
             generator photon {
               provider = "photonjs"
             }
-    
+   
             model World {
-              id         Int     @id @default(autoincrement())
-              name       String  @unique
+              id         Int    @id @default(autoincrement())
+              name       String @unique
               population Float
             }
           `
@@ -95,21 +102,27 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
         fs.writeAsync(
           'prisma/seed.ts',
           stripIndent`
-            import { Photon } from "@prisma/photon"
-    
+            import { Photon } from '@prisma/photon'
+
             const photon = new Photon()
             
             main()
             
             async function main() {
-              const result = await photon.worlds.create({
-                data: {
-                  name: "Earth",
-                  population: 6_000_000_000
-                }
-              })
+              const results = await Promise.all(
+                [
+                  {
+                    name: 'Earth',
+                    population: 6_000_000_000,
+                  },
+                  {
+                    name: 'Mars',
+                    population: 0,
+                  },
+                ].map(data => photon.worlds.create({ data })),
+              )
             
-              console.log("Seeded: %j", result)
+              console.log('Seeded: %j', results)
             
               photon.disconnect()
             }
@@ -149,6 +162,13 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
                     return world
                   }
                 })
+
+                t.list.field('worlds', {
+                  type: 'World',
+                  resolve(_root, _args, ctx) { 
+                    return ctx.photon.worlds.findMany()
+                  }
+                }
               }
             })
           `
@@ -606,8 +626,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
           providerAliases: PROVIDER_ALIASES,
           // TODO this version should stay in sync with what the yarn lock file
           // contains for entry @prisma/photo
-          // version: '2.0.0-preview018.2',
-          version: '2.0.0-alpha.467',
+          version: '2.0.0-preview019',
         },
         schemaPath: schema,
         reactAppDir: path.join(
@@ -773,11 +792,14 @@ function renderDatasource(
 ): string {
   const provider = DATABASE_TO_PRISMA_PROVIDER[db.database]
 
-  return stripIndent`
-    datasource db {
-      provider = "${provider}"
-      url      = "${renderConnectionURI(db, projectName)}"
-    }`
+  return (
+    stripIndent`
+      datasource db {
+        provider = "${provider}"
+        url      = "${renderConnectionURI(db, projectName)}"
+      }
+    ` + '\n'
+  )
 }
 
 const DATABASE_TO_CONNECTION_URI: Record<

@@ -1,6 +1,6 @@
 {
   "name": "graphql-santa-plugin-prisma",
-  "version": "0.0.0-master.41a41ff",
+  "version": "0.0.0-pr.14.bf8a5e1",
   "license": "MIT",
   "author": "Jason Kuhrt",
   "main": "dist/index.js",
@@ -46,16 +46,16 @@
   },
   "dependencies": {
     "@prisma/generator-helper": "^0.0.29",
-    "@prisma/photon": "2.0.0-alpha.467",
+    "@prisma/photon": "2.0.0-preview019",
     "@prisma/sdk": "^0.0.103",
-    "@prisma/studio-server": "^0.172.0",
+    "@prisma/studio-server": "^0.173.0",
     "chalk": "^3.0.0",
     "common-tags": "^1.8.0",
     "fs-jetpack": "^2.2.3",
     "get-port": "^5.1.0",
     "nexus-prisma": "^0.6.2-next.3",
     "open": "^7.0.0",
-    "prisma2": "2.0.0-alpha.467",
+    "prisma2": "2.0.0-preview019",
     "prismjs": "^1.17.1",
     "stacktrace-parser": "^0.1.8"
   },
