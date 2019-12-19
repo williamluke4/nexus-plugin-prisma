@@ -168,7 +168,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
                   resolve(_root, _args, ctx) { 
                     return ctx.photon.worlds.findMany()
                   }
-                }
+                })
               }
             })
           `
