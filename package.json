@@ -15,7 +15,7 @@
     "test": "tsdx test",
     "lint": "tsdx lint",
     "publish:master": "[ \"$(git rev-parse --abbrev-ref HEAD)\" = \"master\" ] && yarn publish --tag master --no-git-tag-version --new-version \"0.0.0-master.$(git show -s head --format='%h')\" && git commit -am 'chore: version' && git push",
-    "publish:pr": "PR=$(hub pr show -f '%I') && yarn publish --tag pr.${PR} --no-git-tag-version --new-version \"0.0.0-pr.${PR}.$(git show -s head --format='%h')\"",
+    "publish:pr": "PR=$(hub pr show -f '%I') && yarn publish --tag pr.${PR} --no-git-tag-version --new-version \"0.0.0-pr.${PR}.$(git show -s head --format='%h')\" && git checkout package.json",
     "prepack": "yarn -s build"
   },
   "peerDependencies": {
@@ -33,8 +33,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.7.5",
-    "@babel/plugin-proposal-nullish-coalescing-operator": "^7.7.4",
-    "@babel/plugin-proposal-optional-chaining": "^7.7.5",
     "@types/common-tags": "^1.8.0",
     "@types/jest": "^24.0.24",
     "@types/prismjs": "^1.16.0",
@@ -42,30 +40,24 @@
     "husky": "^3.1.0",
     "node-fetch": "^2.6.0",
     "prettier": "^1.19.1",
-    "tsdx": "^0.11.0",
+    "tsdx": "^0.12.0",
     "tslib": "^1.10.0",
     "typescript": "^3.7.3"
   },
   "dependencies": {
     "@prisma/generator-helper": "^0.0.29",
-    "@prisma/photon": "^2.0.0-preview018.2",
-    "@prisma/sdk": "^0.0.102",
-    "@prisma/studio-server": "^0.170.0",
+    "@prisma/photon": "2.0.0-alpha.467",
+    "@prisma/sdk": "^0.0.103",
+    "@prisma/studio-server": "^0.172.0",
     "chalk": "^3.0.0",
     "common-tags": "^1.8.0",
     "fs-jetpack": "^2.2.3",
     "get-port": "^5.1.0",
     "nexus-prisma": "^0.6.2-next.3",
     "open": "^7.0.0",
-    "prisma2": "^2.0.0-preview018.1",
+    "prisma2": "2.0.0-alpha.467",
     "prismjs": "^1.17.1",
     "stacktrace-parser": "^0.1.8"
-  },
-  "babel": {
-    "plugins": [
-      "@babel/plugin-proposal-optional-chaining",
-      "@babel/plugin-proposal-nullish-coalescing-operator"
-    ]
   },
   "prisma": {
     "version": "3c4da1d6caa0c40a0210a346ec982c77f74e18c7"

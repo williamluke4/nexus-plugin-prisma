@@ -86,7 +86,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
             }
     
             model World {
-              id         Int     @id
+              id         Int     @id @default(autoincrement())
               name       String  @unique
               population Float
             }
@@ -183,12 +183,12 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
         `)
         gqlSanta.utils.log.info(stripIndent`
           2. Run \`${chalk.greenBright(
-            packageManager.renderRunScript('santa db init')
+            packageManager.renderRunBin('santa db init')
           )}\` to initialize your database.
         `)
         gqlSanta.utils.log.info(stripIndent`
           3. Run \`${chalk.greenBright(
-            packageManager.renderRunScript('ts-node prisma/seed.ts')
+            packageManager.renderRunBin('ts-node prisma/seed.ts')
           )}\` to seed your database.
         `)
         gqlSanta.utils.log.info(stripIndent`
@@ -604,6 +604,10 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
         photonWorkerPath,
         photonGenerator: {
           providerAliases: PROVIDER_ALIASES,
+          // TODO this version should stay in sync with what the yarn lock file
+          // contains for entry @prisma/photo
+          // version: '2.0.0-preview018.2',
+          version: '2.0.0-alpha.467',
         },
         schemaPath: schema,
         reactAppDir: path.join(
@@ -782,7 +786,7 @@ const DATABASE_TO_CONNECTION_URI: Record<
 > = {
   SQLite: _ => 'file://dev.db',
   PostgreSQL: projectName =>
-    `postgresql://postgres:<password>@localhost:5432/${projectName}`,
+    `postgresql://postgres:postgres@localhost:5432/${projectName}`,
   MySQL: projectName => `mysql://root:<password>@localhost:3306/${projectName}`,
 }
 
@@ -825,7 +829,7 @@ function handleLiftResponse(
         .replace(/prisma2 lift up/g, 'santa db migrate apply')
         .replace(/🏋️‍ lift up --preview/g, '')
         .replace(/🏋️‍ lift up/g, '')
-        .replace(/📼  lift save --name init/, '')
+        .replace(/📼 {2}lift save --name init/, '')
         .replace(/To apply the migrations, run santa db migrate apply/g, '')
     )
   }
