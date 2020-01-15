@@ -12,6 +12,7 @@ import open from 'open'
 import * as path from 'path'
 import { suggestionList } from './lib/levenstein'
 import { printStack } from './lib/print-stack'
+import { simpleDebounce } from './lib/simpleDebounce'
 
 type UnknownFieldName = {
   error: Error
@@ -176,7 +177,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
       ])
 
       if (hctx.connectionURI || hctx.database === 'SQLite') {
-        gqlSanta.utils.log.successBold('Initializing development database...')
+        gqlSanta.utils.log.info('Initializing development database...')
         // TODO expose run on graphql-santa
         await packageManager.runBin(
           'prisma2 lift save --create-db --name init',
@@ -231,25 +232,40 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
       await runPrismaGenerators()
     }
 
-    hooks.dev.onFileWatcherEvent = (_event, file) => {
+    const migrateDb = simpleDebounce(async () => {
+      gqlSanta.utils.log.info(`Prisma Schema change detected, migrating...`)
+      // Raw code being run is this https://github.com/prisma/lift/blob/dce60fe2c44e8a0d951d961187aec95a50a33c6f/src/cli/commands/LiftTmpPrepare.ts#L33-L45
+      gqlSanta.utils.debug('running lift...')
+      const result = await gqlSanta.utils.run('prisma2 tmp-prepare', {
+        require: true,
+      })
+
+      gqlSanta.utils.debug('result %O', result)
+
+      return result
+    })
+
+    hooks.dev.onFileWatcherEvent = async (_event, file, _stats, runner) => {
       if (file.match(/.*schema\.prisma$/)) {
-        gqlSanta.utils.log.info(
-          chalk`Prisma Schema change detected, lifting...`
-        )
-        // Raw code being run is this https://github.com/prisma/lift/blob/dce60fe2c44e8a0d951d961187aec95a50a33c6f/src/cli/commands/LiftTmpPrepare.ts#L33-L45
-        gqlSanta.utils.debug('running lift...')
-        const result = gqlSanta.utils.run('prisma2 tmp-prepare', {
-          require: true,
-        })
-        gqlSanta.utils.debug('done %O', result)
+        await migrateDb()
+        gqlSanta.utils.log.info('Migration applied')
+        runner.restart(file)
       }
     }
 
-    hooks.dev.addToSettings = {
+    hooks.dev.addToWatcherSettings = {
       // TODO preferably we allow schema.prisma to be anywhere but they show up in
       // migrations folder too and we don't know how to achieve semantic "anywhere
       // but migrations folder"
       watchFilePatterns: ['./schema.prisma', './prisma/schema.prisma'],
+      listeners: {
+        app: {
+          ignoreFilePatterns: ['./prisma/**', './schema.prisma'],
+        },
+        plugin: {
+          allowFilePatterns: ['./schema.prisma', './prisma/schema.prisma'],
+        },
+      },
     }
 
     hooks.db = {

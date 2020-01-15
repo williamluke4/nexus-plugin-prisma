@@ -44,10 +44,10 @@
     "typescript": "^3.7.3"
   },
   "dependencies": {
-    "@prisma/generator-helper": "^0.0.29",
+    "@prisma/generator-helper": "^0.0.31",
     "@prisma/photon": "2.0.0-preview019",
-    "@prisma/sdk": "^0.0.103",
-    "@prisma/studio-server": "^0.173.0",
+    "@prisma/sdk": "^0.0.133",
+    "@prisma/studio-server": "^0.179.0",
     "chalk": "^3.0.0",
     "common-tags": "^1.8.0",
     "fs-jetpack": "^2.2.3",
