@@ -45,6 +45,18 @@ const PROVIDER_ALIASES: Prisma.ProviderAliases = {
   },
 }
 
+let photonInstance: object | null = null
+
+const getPhotonInstance = () => {
+  if (!photonInstance) {
+    const { Photon } = require('@prisma/photon')
+
+    photonInstance = new Photon()
+  }
+
+  return photonInstance
+}
+
 export const create = GraphQLSantaPlugin.create(gqlSanta => {
   const nexusPrismaTypegenOutput = fs.path(
     'node_modules/@types/typegen-nexus-prisma/index.d.ts'
@@ -413,8 +425,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
 
   gqlSanta.runtime(() => {
     gqlSanta.utils.debug('Running runtime...')
-    const { Photon } = require('@prisma/photon')
-    const photon = new Photon()
+    const photon = getPhotonInstance()
 
     return {
       context: {
@@ -445,6 +456,14 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
       },
     }
   })
+
+  gqlSanta.testing(() => ({
+    app: {
+      db: {
+        client: getPhotonInstance(),
+      },
+    },
+  }))
 
   /**
    * Execute all the generators in the user's PSL file.
