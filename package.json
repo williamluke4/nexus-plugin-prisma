@@ -19,7 +19,7 @@
     "release:preview": "dripip preview",
     "publish:pr": "PR=$(hub pr show -f '%I') && yarn publish --tag pr.${PR} --no-git-tag-version --new-version \"0.0.0-pr.${PR}.$(git show -s head --format='%h')\" && git checkout package.json",
     "prepack": "yarn -s build",
-    "postinstall": "mkdir -p $(PWD)/node_modules/@types/graphql-santa-plugin-prisma && cp $(PWD)/node_modules/graphql-santa-plugin-prisma/global-type.d.ts $(PWD)/node_modules/@types/graphql-santa-plugin-prisma/index.d.ts"
+    "postinstall": "mkdir -p \"$PWD/../@types/graphql-santa-plugin-prisma\" && cp \"$PWD/global-type.d.ts\" \"$PWD/../@types/graphql-santa-plugin-prisma/index.d.ts\""
   },
   "peerDependencies": {
     "graphql-santa": "^0.2.0"
