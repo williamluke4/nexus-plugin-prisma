@@ -21,7 +21,9 @@
     "prepack": "yarn -s build",
     "postinstall": "mkdir -p $(PWD)/node_modules/@types/graphql-santa-plugin-prisma && cp $(PWD)/node_modules/graphql-santa-plugin-prisma/global-type.d.ts $(PWD)/node_modules/@types/graphql-santa-plugin-prisma/index.d.ts"
   },
-  "peerDependencies": {},
+  "peerDependencies": {
+    "graphql-santa": "^0.2.0"
+  },
   "husky": {
     "hooks": {
       "pre-commit": "tsdx lint"
@@ -37,7 +39,7 @@
     "@types/common-tags": "^1.8.0",
     "@types/jest": "^24.0.24",
     "@types/prismjs": "^1.16.0",
-    "graphql-santa": "file:.yalc/graphql-santa",
+    "graphql-santa": "^0.2.0",
     "husky": "^3.1.0",
     "node-fetch": "^2.6.0",
     "prettier": "^1.19.1",
