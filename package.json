@@ -15,8 +15,8 @@
     "build": "node build-scripts/update-hash.js && tsdx build",
     "test": "tsdx test",
     "lint": "tsdx lint",
-    "publish:stable": "[ \"$(git rev-parse --abbrev-ref HEAD)\" = \"master\" ] && yarn publish --tag latest && git push && git push --tags",
-    "publish:master": "[ \"$(git rev-parse --abbrev-ref HEAD)\" = \"master\" ] && yarn publish --tag master --no-git-tag-version --new-version \"0.0.0-master.$(git show -s head --format='%h')\" && git commit -am 'chore: version' && git push",
+    "release:stable": "dripip stable",
+    "release:preview": "dripip preview",
     "publish:pr": "PR=$(hub pr show -f '%I') && yarn publish --tag pr.${PR} --no-git-tag-version --new-version \"0.0.0-pr.${PR}.$(git show -s head --format='%h')\" && git checkout package.json",
     "prepack": "yarn -s build",
     "postinstall": "mkdir -p $(PWD)/node_modules/@types/graphql-santa-plugin-prisma && cp $(PWD)/node_modules/graphql-santa-plugin-prisma/global-type.d.ts $(PWD)/node_modules/@types/graphql-santa-plugin-prisma/index.d.ts"
@@ -39,6 +39,7 @@
     "@types/common-tags": "^1.8.0",
     "@types/jest": "^24.0.24",
     "@types/prismjs": "^1.16.0",
+    "dripip": "^0.3.2",
     "graphql-santa": "^0.2.0",
     "husky": "^3.1.0",
     "node-fetch": "^2.6.0",
