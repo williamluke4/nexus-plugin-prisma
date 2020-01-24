@@ -5,14 +5,19 @@ import { stripIndent } from 'common-tags'
 import * as fs from 'fs-jetpack'
 import getPort from 'get-port'
 import { shouldGenerateArtifacts } from 'graphql-santa/dist/framework/nexus'
-import * as GraphQLSantaPlugin from 'graphql-santa/dist/framework/plugin'
+import * as SantaPlugin from 'graphql-santa/plugin'
 import { SuccessfulRunResult } from 'graphql-santa/dist/utils'
 import { nexusPrismaPlugin, Options } from 'nexus-prisma'
 import open from 'open'
-import * as path from 'path'
+import * as Path from 'path'
 import { suggestionList } from './lib/levenstein'
 import { printStack } from './lib/print-stack'
 import { simpleDebounce } from './lib/simpleDebounce'
+import { linkableRequire } from './utils'
+
+if (process.env.LINK) {
+  process.env.NEXUS_PRISMA_LINK = process.env.LINK
+}
 
 type UnknownFieldName = {
   error: Error
@@ -49,7 +54,7 @@ let photonInstance: object | null = null
 
 const getPhotonInstance = () => {
   if (!photonInstance) {
-    const { Photon } = require('@prisma/photon')
+    const { Photon } = linkableRequire('@prisma/photon')
 
     photonInstance = new Photon()
   }
@@ -57,13 +62,72 @@ const getPhotonInstance = () => {
   return photonInstance
 }
 
-export const create = GraphQLSantaPlugin.create(gqlSanta => {
+export default SantaPlugin.create(project => {
   const nexusPrismaTypegenOutput = fs.path(
     'node_modules/@types/typegen-nexus-prisma/index.d.ts'
   )
 
-  gqlSanta.workflow((hooks, { layout, packageManager }) => {
-    gqlSanta.utils.debug('Running workflow...')
+  project.runtime(() => {
+    project.utils.log.trace('start')
+    const photon = getPhotonInstance()
+    project.utils.log.debug('hi')
+
+    return {
+      context: {
+        create: _req => {
+          return { photon }
+        },
+        typeGen: {
+          fields: {
+            photon: 'Photon.Photon',
+          },
+          // import not needed here because it will already be from the
+          // typegenAutoConfig below
+          // imports: [
+          //   {
+          //     as: 'Photon',
+          //     from: GENERATED_PHOTON_OUTPUT_PATH,
+          //   },
+          // ],
+        },
+      },
+      nexus: {
+        typegenAutoConfig: {
+          // https://github.com/prisma-labs/nexus-prisma/blob/master/examples/hello-world/app.ts#L14
+          sources: [
+            {
+              source: Path.join(GENERATED_PHOTON_OUTPUT_PATH, '/index.d.ts'),
+              alias: 'Photon',
+            },
+          ],
+        },
+        plugins: [
+          nexusPrismaPlugin({
+            inputs: {
+              photon: GENERATED_PHOTON_OUTPUT_PATH,
+            },
+            outputs: {
+              typegen: nexusPrismaTypegenOutput,
+            },
+            shouldGenerateArtifacts: shouldGenerateArtifacts(),
+            onUnknownFieldName: params => renderUnknownFieldNameError(params),
+            onUnknownFieldType: params => renderUnknownFieldTypeError(params),
+          } as OptionsWithHook),
+        ],
+      },
+    }
+  })
+
+  project.testing(() => ({
+    app: {
+      db: {
+        client: getPhotonInstance(),
+      },
+    },
+  }))
+
+  project.workflow((hooks, { layout, packageManager }) => {
+    project.utils.log.trace('start')
     // build
 
     hooks.build.onStart = async () => {
@@ -189,7 +253,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
       ])
 
       if (hctx.connectionURI || hctx.database === 'SQLite') {
-        gqlSanta.utils.log.info('Initializing development database...')
+        project.utils.log.info('Initializing development database...')
         // TODO expose run on graphql-santa
         await packageManager.runBin(
           'prisma2 lift save --create-db --name init',
@@ -199,32 +263,32 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
         )
         await packageManager.runBin('prisma2 lift up', { require: true })
 
-        gqlSanta.utils.log.info('Generating photon...')
+        project.utils.log.info('Generating photon...')
         await packageManager.runBin('prisma2 generate', { require: true })
 
-        gqlSanta.utils.log.info('Seeding development database...')
+        project.utils.log.info('Seeding development database...')
         await packageManager.runBin('ts-node prisma/seed', {
           require: true,
         })
       } else {
-        gqlSanta.utils.log.info(stripIndent`
+        project.utils.log.info(stripIndent`
           1. Please setup your ${
             hctx.database
           } and fill in the connection uri in your \`${chalk.greenBright(
           'prisma/schema.prisma'
         )}\` file.
         `)
-        gqlSanta.utils.log.info(stripIndent`
+        project.utils.log.info(stripIndent`
           2. Run \`${chalk.greenBright(
             packageManager.renderRunBin('santa db init')
           )}\` to initialize your database.
         `)
-        gqlSanta.utils.log.info(stripIndent`
+        project.utils.log.info(stripIndent`
           3. Run \`${chalk.greenBright(
             packageManager.renderRunBin('ts-node prisma/seed.ts')
           )}\` to seed your database.
         `)
-        gqlSanta.utils.log.info(stripIndent`
+        project.utils.log.info(stripIndent`
           4. Run \`${chalk.greenBright(
             packageManager.renderRunScript('dev')
           )}\` to start working.
@@ -245,14 +309,14 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
     }
 
     const migrateDb = simpleDebounce(async () => {
-      gqlSanta.utils.log.info(`Prisma Schema change detected, migrating...`)
+      project.utils.log.info(`Prisma Schema change detected, migrating...`)
       // Raw code being run is this https://github.com/prisma/lift/blob/dce60fe2c44e8a0d951d961187aec95a50a33c6f/src/cli/commands/LiftTmpPrepare.ts#L33-L45
-      gqlSanta.utils.debug('running lift...')
-      const result = await gqlSanta.utils.run('prisma2 tmp-prepare', {
+      project.utils.log.trace('running lift...')
+      const result = await project.utils.run('prisma2 tmp-prepare', {
         require: true,
       })
 
-      gqlSanta.utils.debug('result %O', result)
+      project.utils.log.trace('result', result)
 
       return result
     })
@@ -260,7 +324,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
     hooks.dev.onFileWatcherEvent = async (_event, file, _stats, runner) => {
       if (file.match(/.*schema\.prisma$/)) {
         await migrateDb()
-        gqlSanta.utils.log.info('Migration applied')
+        project.utils.log.info('Migration applied')
         runner.restart(file)
       }
     }
@@ -290,7 +354,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
 
           if (
             handleLiftResponse(
-              gqlSanta,
+              project,
               initResponse,
               'We could not initialize your database',
               { silentStdout: true }
@@ -302,7 +366,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
             )
             if (
               handleLiftResponse(
-                gqlSanta,
+                project,
                 migrateResponse,
                 'We could not initialize your database'
               )
@@ -323,7 +387,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
 
               if (
                 !handleLiftResponse(
-                  gqlSanta,
+                  project,
                   previewResponse,
                   'We could not run a dry-run of your migration'
                 )
@@ -339,14 +403,14 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
                 return
               }
 
-              const { confirm } = await gqlSanta.utils.prompt({
+              const { confirm } = await project.utils.prompt({
                 type: 'confirm',
                 name: 'confirm',
                 message: 'Do you want to apply the above migration?',
               })
 
               if (!confirm) {
-                gqlSanta.utils.log.info('Migration not applied.')
+                project.utils.log.info('Migration not applied.')
                 return
               }
             }
@@ -357,7 +421,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
             })
 
             handleLiftResponse(
-              gqlSanta,
+              project,
               response,
               'We could not migrate your database'
             )
@@ -368,7 +432,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
             let migrationName = hctx.migrationName
 
             if (!migrationName) {
-              const inputMigration = await gqlSanta.utils.prompt({
+              const inputMigration = await project.utils.prompt({
                 type: 'text',
                 name: 'name',
                 message: `Name of your migration`,
@@ -387,7 +451,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
             )
 
             handleLiftResponse(
-              gqlSanta,
+              project,
               response,
               'We could not generate a migration file'
             )
@@ -400,7 +464,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
             })
 
             handleLiftResponse(
-              gqlSanta,
+              project,
               response,
               'We could not rollback your migration'
             )
@@ -414,56 +478,14 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
 
           if (studio?.port) {
             await open(`http://localhost:${studio.port}`)
-            gqlSanta.utils.log.info(
-              `Studio started at http://localhost:${studio.port}`
-            )
+            project.utils.log.info(`Studio started`, {
+              url: `http://localhost:${studio.port}`,
+            })
           }
         },
       },
     }
   })
-
-  gqlSanta.runtime(() => {
-    gqlSanta.utils.debug('Running runtime...')
-    const photon = getPhotonInstance()
-
-    return {
-      context: {
-        create: _req => {
-          return { photon }
-        },
-        typeGen: {
-          imports: [{ as: 'Photon', from: GENERATED_PHOTON_OUTPUT_PATH }],
-          fields: {
-            photon: 'Photon.Photon',
-          },
-        },
-      },
-      nexus: {
-        plugins: [
-          nexusPrismaPlugin({
-            inputs: {
-              photon: GENERATED_PHOTON_OUTPUT_PATH,
-            },
-            outputs: {
-              typegen: nexusPrismaTypegenOutput,
-            },
-            shouldGenerateArtifacts: shouldGenerateArtifacts(),
-            onUnknownFieldName: params => renderUnknownFieldNameError(params),
-            onUnknownFieldType: params => renderUnknownFieldTypeError(params),
-          } as OptionsWithHook),
-        ],
-      },
-    }
-  })
-
-  gqlSanta.testing(() => ({
-    app: {
-      db: {
-        client: getPhotonInstance(),
-      },
-    },
-  }))
 
   /**
    * Execute all the generators in the user's PSL file.
@@ -479,14 +501,14 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
 
     // TODO Do not assume that just because photon does not need to be regenerated that no other generators do
     if ((await shouldRegeneratePhoton(schemaPath)) === false) {
-      gqlSanta.utils.debug(
+      project.utils.log.trace(
         'Prisma generators were not run because the prisma schema was not updated'
       )
       return
     }
 
     if (!options.silent) {
-      gqlSanta.utils.log.info('Running Prisma generators ...')
+      project.utils.log.info('Running Prisma generators ...')
     }
 
     let generators = await getGenerators(schemaPath)
@@ -499,14 +521,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
 
     for (const g of generators) {
       const resolvedSettings = getGeneratorResolvedSettings(g)
-
-      gqlSanta.utils.debug(
-        'generating %s instance %s to %s',
-        resolvedSettings.name,
-        resolvedSettings.instanceName,
-        resolvedSettings.output
-      )
-
+      project.utils.log.trace('generating', resolvedSettings)
       await g.generate()
       g.stop()
     }
@@ -526,7 +541,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
     })
 
     if (schemaPaths.length > 1) {
-      gqlSanta.utils.log.warn(
+      project.utils.log.warn(
         `We found multiple "schema.prisma" files in your project.\n${schemaPaths
           .map((p, i) => `- "${p}"${i === 0 ? ' (used by graphql-santa)' : ''}`)
           .join('\n')}`
@@ -542,15 +557,14 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
   async function shouldRegeneratePhoton(
     localSchemaPath: string
   ): Promise<boolean> {
-    const photonSchemaPath = path.join(
+    const photonSchemaPath = Path.join(
       GENERATED_PHOTON_OUTPUT_PATH,
       'schema.prisma'
     )
 
-    gqlSanta.utils.debug(
-      "checking if photon needs to be regenerated by comparing users PSL to photon's local copy...\n%s\n%s",
-      photonSchemaPath,
-      localSchemaPath
+    project.utils.log.trace(
+      "checking if photon needs to be regenerated by comparing users PSL to photon's local copy...",
+      { photonSchemaPath, localSchemaPath }
     )
 
     const [photonSchema, localSchema] = await Promise.all([
@@ -559,20 +573,20 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
     ])
 
     if (photonSchema !== undefined && localSchema !== undefined) {
-      gqlSanta.utils.debug('...found photon and its local version of PSL')
+      project.utils.log.trace('...found photon and its local version of PSL')
       if (photonSchema === localSchema) {
-        gqlSanta.utils.debug(
+        project.utils.log.trace(
           "...found that its local PSL version matches user's current, will NOT regenerate photon"
         )
         return false
       } else {
-        gqlSanta.utils.debug(
+        project.utils.log.trace(
           "...found that its local PSL version does not match user's current, WILL regenerate photon"
         )
         return true
       }
     } else {
-      gqlSanta.utils.debug(
+      project.utils.log.trace(
         '...did not find generated photon package or its local copy of PSL'
       )
       return true
@@ -580,11 +594,11 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
   }
 
   async function scaffoldPhotonGeneratorBlock(schemaPath: string) {
-    const schemaPathAbs = path.relative(process.cwd(), schemaPath)
-    gqlSanta.utils.log.warn(
+    const schemaPathAbs = Path.relative(process.cwd(), schemaPath)
+    project.utils.log.warn(
       `A PhotonJS generator block is needed in your Prisma Schema at "${schemaPathAbs}".`
     )
-    gqlSanta.utils.log.warn('We scaffolded one for you.')
+    project.utils.log.warn('We scaffolded one for you.')
     const schemaContent = await fs.readAsync(schemaPath)!
     const generatorBlock = stripIndent`
       generator photon {
@@ -604,7 +618,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
       const pathCandidates = [
         // ncc go home
         // tslint:disable-next-line
-        path.join(
+        Path.join(
           __dirname,
           `../../@prisma/sdk/query-engine-${platform}${extension}`
         ),
@@ -632,12 +646,12 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
       let photonWorkerPath: string | undefined
       try {
         const studioTransport = require.resolve('@prisma/studio-transports')
-        photonWorkerPath = path.join(
-          path.dirname(studioTransport),
+        photonWorkerPath = Path.join(
+          Path.dirname(studioTransport),
           'photon-worker.js'
         )
       } catch (e) {
-        gqlSanta.utils.log.error(e)
+        project.utils.log.error(e)
         return null
       }
 
@@ -648,7 +662,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
       const schema = await maybeFindPrismaSchema()
 
       if (!schema) {
-        gqlSanta.utils.log.error('We could not find your schema.prisma file')
+        project.utils.log.error('We could not find your schema.prisma file')
         return null
       }
 
@@ -664,8 +678,8 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
           version: '2.0.0-preview019',
         },
         schemaPath: schema,
-        reactAppDir: path.join(
-          path.dirname(require.resolve('@prisma/studio/package.json')),
+        reactAppDir: Path.join(
+          Path.dirname(require.resolve('@prisma/studio/package.json')),
           'build'
         ),
       })
@@ -674,7 +688,7 @@ export const create = GraphQLSantaPlugin.create(gqlSanta => {
 
       return { port }
     } catch (e) {
-      gqlSanta.utils.log.error(e)
+      project.utils.log.error(e)
     }
 
     return null
@@ -700,6 +714,7 @@ function renderUnknownFieldNameError(params: UnknownFieldName) {
           .join(', ')} ?`
   const intro = chalk`{yellow Warning:} ${params.error.message}\n{yellow Warning:} in ${fileLineNumber}\n${suggestionMessage}`
 
+  // todo use logger once "pretty" api done
   console.log(`${intro}${stack}`)
 }
 
@@ -713,6 +728,7 @@ function renderUnknownFieldTypeError(params: UnknownFieldType) {
 
   const intro = chalk`{yellow Warning:} ${params.error.message}\n{yellow Warning:} in ${fileLineNumber}`
 
+  // todo use logger once "pretty" api done
   console.log(`${intro}${stack}`)
 }
 
@@ -732,11 +748,11 @@ function renderUnknownFieldTypeError(params: UnknownFieldType) {
 //   const schemaPath = await maybeFindPrismaSchema();
 
 //   if (schemaPath === null) {
-//     graphql-santa.utils.debug('detected that this is not prisma framework project');
+//     graphql-santa.utils.log.trace('detected that this is not prisma framework project');
 //     return { enabled: false };
 //   }
 
-//   graphql-santa.utils.debug('detected that this is a prisma framework project');
+//   graphql-santa.utils.log.trace('detected that this is a prisma framework project');
 //   return { enabled: true, schemaPath: fs.path(schemaPath) };
 // }
 
@@ -767,11 +783,11 @@ function renderUnknownFieldTypeError(params: UnknownFieldType) {
 //   }
 
 //   if (schemaPaths.length === 0) {
-//     graphql-santa.utils.debug('detected that this is not prisma framework project');
+//     graphql-santa.utils.log.trace('detected that this is not prisma framework project');
 //     return { enabled: false };
 //   }
 
-//   graphql-santa.utils.debug('detected that this is a prisma framework project');
+//   graphql-santa.utils.log.trace('detected that this is a prisma framework project');
 //   return { enabled: true, schemaPath: fs.path(schemaPaths[0]) };
 // }
 
@@ -803,11 +819,8 @@ function getGeneratorResolvedSettings(
   }
 }
 
-type Database = Exclude<
-  GraphQLSantaPlugin.OnAfterBaseSetupLens['database'],
-  undefined
->
-type ConnectionURI = GraphQLSantaPlugin.OnAfterBaseSetupLens['connectionURI']
+type Database = 'SQLite' | 'MySQL' | 'PostgreSQL'
+type ConnectionURI = string | undefined
 
 const DATABASE_TO_PRISMA_PROVIDER: Record<
   Database,
@@ -862,18 +875,18 @@ function renderConnectionURI(
 }
 
 function handleLiftResponse(
-  gqlSanta: GraphQLSantaPlugin.Lens,
+  project: SantaPlugin.Lens,
   response: SuccessfulRunResult,
   message: string,
   options: { silentStdout: boolean } = { silentStdout: false }
 ): boolean {
   if (response.error || response.stderr) {
-    gqlSanta.utils.log.error(message)
+    project.utils.log.error(message)
 
     if (response.stderr) {
-      gqlSanta.utils.log.error(response.stderr)
+      project.utils.log.error(response.stderr)
     } else if (response.error?.stack) {
-      gqlSanta.utils.log.error(response.error.stack)
+      project.utils.log.error(response.error.stack)
     }
     return false
   }

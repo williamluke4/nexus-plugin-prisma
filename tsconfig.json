@@ -1,5 +1,5 @@
 {
-  "include": ["src", "types", "test", "global-type.d.ts"],
+  "include": ["src", "test", "global-type.d.ts"],
   "compilerOptions": {
     "target": "es5",
     "module": "esnext",
@@ -9,12 +9,6 @@
     "sourceMap": true,
     "rootDir": "./",
     "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictPropertyInitialization": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
