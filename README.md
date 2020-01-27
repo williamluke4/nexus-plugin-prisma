@@ -1,1 +1,1 @@
-# graphql-santa-plugin-prisma
+# nexus-plugin-prisma
