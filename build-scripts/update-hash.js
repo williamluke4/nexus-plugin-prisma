@@ -4,13 +4,15 @@ const path = require('path')
 const prettier = require('prettier')
 
 /**
- * Update the binary version hash based on @prisma/photon version
+ * Update the binary version hash based on @prisma/client version
  */
 async function main() {
   const packageJsonPath = path.join(__dirname, '..', 'package.json')
   const localPackageJson = require(packageJsonPath)
-  const photonVersion = localPackageJson.dependencies['@prisma/photon']
-  const prisma2PackageJson = await fetch(`https://unpkg.com/prisma2@${photonVersion}/package.json`)
+  const prismaClientVersion = localPackageJson.dependencies['@prisma/client']
+  const prisma2PackageJson = await fetch(
+    `https://unpkg.com/prisma2@${prismaClientVersion}/package.json`
+  )
   const hash = (await prisma2PackageJson.json()).prisma.version
 
   if (localPackageJson.prisma.version === hash) {
@@ -21,7 +23,10 @@ async function main() {
 
   localPackageJson.prisma.version = hash
 
-  const updatedPackageJson = prettier.format(JSON.stringify(localPackageJson), { parser: 'json-stringify', ...localPackageJson.prettier })
+  const updatedPackageJson = prettier.format(JSON.stringify(localPackageJson), {
+    parser: 'json-stringify',
+    ...localPackageJson.prettier,
+  })
 
   fs.writeFileSync(packageJsonPath, updatedPackageJson)
 }

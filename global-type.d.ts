@@ -1,10 +1,10 @@
 //@ts-ignore
-import { Photon } from '@prisma/photon'
+import { PrismaClient } from '@prisma/client'
 
 declare global {
   interface GraphQLSantaTestContextApp {
     db: {
-      client: Photon
+      client: PrismaClient
     }
   }
 }

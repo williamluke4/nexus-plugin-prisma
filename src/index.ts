@@ -41,25 +41,19 @@ type OptionsWithHook = Options & {
 // HACK
 // 1. https://prisma-company.slack.com/archives/C8AKVD5HU/p1574267904197600
 // 2. https://prisma-company.slack.com/archives/CEYCG2MCN/p1574267824465700
-const GENERATED_PHOTON_OUTPUT_PATH = fs.path('node_modules/@prisma/photon')
-const PROVIDER_ALIASES: Prisma.ProviderAliases = {
-  photonjs: {
-    // HACK (see var declaration LOC)
-    outputPath: GENERATED_PHOTON_OUTPUT_PATH,
-    generatorPath: require.resolve('@prisma/photon/generator-build'),
-  },
-}
+const GENERATED_PRISMA_CLIENT_OUTPUT_PATH = fs.path(
+  'node_modules/@prisma/client'
+)
+let prismaClientInstance: object | null = null
 
-let photonInstance: object | null = null
+const getPrismaClientInstance = () => {
+  if (!prismaClientInstance) {
+    const { PrismaClient } = linkableRequire('@prisma/client')
 
-const getPhotonInstance = () => {
-  if (!photonInstance) {
-    const { Photon } = linkableRequire('@prisma/photon')
-
-    photonInstance = new Photon()
+    prismaClientInstance = new PrismaClient()
   }
 
-  return photonInstance
+  return prismaClientInstance
 }
 
 export default SantaPlugin.create(project => {
@@ -69,17 +63,16 @@ export default SantaPlugin.create(project => {
 
   project.runtime(() => {
     project.utils.log.trace('start')
-    const photon = getPhotonInstance()
-    project.utils.log.debug('hi')
+    const prisma = getPrismaClientInstance()
 
     return {
       context: {
         create: _req => {
-          return { photon }
+          return { db: prisma }
         },
         typeGen: {
           fields: {
-            photon: 'Photon.Photon',
+            db: 'Prisma.PrismaClient',
           },
           // import not needed here because it will already be from the
           // typegenAutoConfig below
@@ -96,15 +89,18 @@ export default SantaPlugin.create(project => {
           // https://github.com/prisma-labs/nexus-prisma/blob/master/examples/hello-world/app.ts#L14
           sources: [
             {
-              source: Path.join(GENERATED_PHOTON_OUTPUT_PATH, '/index.d.ts'),
-              alias: 'Photon',
+              source: Path.join(
+                GENERATED_PRISMA_CLIENT_OUTPUT_PATH,
+                '/index.d.ts'
+              ),
+              alias: 'Prisma',
             },
           ],
         },
         plugins: [
           nexusPrismaPlugin({
             inputs: {
-              photon: GENERATED_PHOTON_OUTPUT_PATH,
+              prismaClient: GENERATED_PRISMA_CLIENT_OUTPUT_PATH,
             },
             outputs: {
               typegen: nexusPrismaTypegenOutput,
@@ -121,7 +117,7 @@ export default SantaPlugin.create(project => {
   project.testing(() => ({
     app: {
       db: {
-        client: getPhotonInstance(),
+        client: getPrismaClientInstance(),
       },
     },
   }))
@@ -165,8 +161,8 @@ export default SantaPlugin.create(project => {
           datasource +
             '\n' +
             stripIndent`
-            generator photon {
-              provider = "photonjs"
+            generator prisma_client {
+              provider = "prisma-client-js"
             }
    
             model World {
@@ -179,9 +175,9 @@ export default SantaPlugin.create(project => {
         fs.writeAsync(
           'prisma/seed.ts',
           stripIndent`
-            import { Photon } from '@prisma/photon'
+            import { PrismaClient } from '@prisma/client'
 
-            const photon = new Photon()
+            const db = new PrismaClient()
             
             main()
             
@@ -196,12 +192,12 @@ export default SantaPlugin.create(project => {
                     name: 'Mars',
                     population: 0,
                   },
-                ].map(data => photon.worlds.create({ data })),
+                ].map(data => db.worlds.create({ data })),
               )
             
               console.log('Seeded: %j', results)
             
-              photon.disconnect()
+              db.disconnect()
             }
           `
         ),
@@ -228,7 +224,7 @@ export default SantaPlugin.create(project => {
                   },
                   async resolve(_root, args, ctx) {
                     const worldToFindByName = args.world ?? 'Earth'
-                    const world = await ctx.photon.worlds.findOne({
+                    const world = await ctx.db.worlds.findOne({
                       where: {
                         name: worldToFindByName
                       }
@@ -243,7 +239,7 @@ export default SantaPlugin.create(project => {
                 t.list.field('worlds', {
                   type: 'World',
                   resolve(_root, _args, ctx) { 
-                    return ctx.photon.worlds.findMany()
+                    return ctx.db.worlds.findMany()
                   }
                 })
               }
@@ -263,7 +259,7 @@ export default SantaPlugin.create(project => {
         )
         await packageManager.runBin('prisma2 lift up', { require: true })
 
-        project.utils.log.info('Generating photon...')
+        project.utils.log.info('Generating Prisma Client JS...')
         await packageManager.runBin('prisma2 generate', { require: true })
 
         project.utils.log.info('Seeding development database...')
@@ -499,8 +495,8 @@ export default SantaPlugin.create(project => {
       throw new Error('please create a prisma file')
     }
 
-    // TODO Do not assume that just because photon does not need to be regenerated that no other generators do
-    if ((await shouldRegeneratePhoton(schemaPath)) === false) {
+    // TODO Do not assume that just because prisma client does not need to be regenerated that no other generators do
+    if ((await shouldRegeneratePrismaClient(schemaPath)) === false) {
       project.utils.log.trace(
         'Prisma generators were not run because the prisma schema was not updated'
       )
@@ -513,8 +509,12 @@ export default SantaPlugin.create(project => {
 
     let generators = await getGenerators(schemaPath)
 
-    if (!generators.find(g => g.options?.generator.provider === 'photonjs')) {
-      await scaffoldPhotonGeneratorBlock(schemaPath)
+    if (
+      !generators.find(
+        g => g.options?.generator.provider === 'prisma-client-js'
+      )
+    ) {
+      await scaffoldPrismaClientGeneratorBlock(schemaPath)
       // TODO: Generate it programmatically instead for performance reason
       generators = await getGenerators(schemaPath)
     }
@@ -552,57 +552,59 @@ export default SantaPlugin.create(project => {
   }
 
   /**
-   * Regenerate photon only if schema was updated between last generation
+   * Regenerate Prisma Client JS only if schema was updated between last generation
    */
-  async function shouldRegeneratePhoton(
+  async function shouldRegeneratePrismaClient(
     localSchemaPath: string
   ): Promise<boolean> {
-    const photonSchemaPath = Path.join(
-      GENERATED_PHOTON_OUTPUT_PATH,
+    const prismaClientSchemaPath = Path.join(
+      GENERATED_PRISMA_CLIENT_OUTPUT_PATH,
       'schema.prisma'
     )
 
     project.utils.log.trace(
-      "checking if photon needs to be regenerated by comparing users PSL to photon's local copy...",
-      { photonSchemaPath, localSchemaPath }
+      "checking if prisma client needs to be regenerated by comparing users PSL to prisma clients' local copy...",
+      { prismaClientSchemaPath, localSchemaPath }
     )
 
-    const [photonSchema, localSchema] = await Promise.all([
-      fs.readAsync(photonSchemaPath),
+    const [clientSchema, localSchema] = await Promise.all([
+      fs.readAsync(prismaClientSchemaPath),
       fs.readAsync(localSchemaPath),
     ])
 
-    if (photonSchema !== undefined && localSchema !== undefined) {
-      project.utils.log.trace('...found photon and its local version of PSL')
-      if (photonSchema === localSchema) {
+    if (clientSchema !== undefined && localSchema !== undefined) {
+      project.utils.log.trace(
+        '...found Prisma Client and its local version of PSL'
+      )
+      if (clientSchema === localSchema) {
         project.utils.log.trace(
-          "...found that its local PSL version matches user's current, will NOT regenerate photon"
+          "...found that its local PSL version matches user's current, will NOT regenerate Prisma Client"
         )
         return false
       } else {
         project.utils.log.trace(
-          "...found that its local PSL version does not match user's current, WILL regenerate photon"
+          "...found that its local PSL version does not match user's current, WILL regenerate Prisma Client"
         )
         return true
       }
     } else {
       project.utils.log.trace(
-        '...did not find generated photon package or its local copy of PSL'
+        '...did not find generated Prisma Client package or its local copy of PSL'
       )
       return true
     }
   }
 
-  async function scaffoldPhotonGeneratorBlock(schemaPath: string) {
+  async function scaffoldPrismaClientGeneratorBlock(schemaPath: string) {
     const schemaPathAbs = Path.relative(process.cwd(), schemaPath)
     project.utils.log.warn(
-      `A PhotonJS generator block is needed in your Prisma Schema at "${schemaPathAbs}".`
+      `A Prisma Client JS generator block is needed in your Prisma Schema at "${schemaPathAbs}".`
     )
     project.utils.log.warn('We scaffolded one for you.')
     const schemaContent = await fs.readAsync(schemaPath)!
     const generatorBlock = stripIndent`
-      generator photon {
-        provider = "photonjs"
+      generator prisma_client {
+        provider = "prisma-client-js"
       }
     `
     await fs.writeAsync(schemaPath, `${generatorBlock}\n${schemaContent}`)
@@ -643,17 +645,17 @@ export default SantaPlugin.create(project => {
 
       const StudioServer = (await import('@prisma/studio-server')).default
 
-      let photonWorkerPath: string | undefined
-      try {
-        const studioTransport = require.resolve('@prisma/studio-transports')
-        photonWorkerPath = Path.join(
-          Path.dirname(studioTransport),
-          'photon-worker.js'
-        )
-      } catch (e) {
-        project.utils.log.error(e)
-        return null
-      }
+      // let photonWorkerPath: string | undefined
+      // try {
+      //   const studioTransport = require.resolve('@prisma/studio-transports')
+      //   photonWorkerPath = Path.join(
+      //     Path.dirname(studioTransport),
+      //     'photon-worker.js'
+      //   )
+      // } catch (e) {
+      //   project.utils.log.error(e)
+      //   return null
+      // }
 
       if (!port) {
         port = await getPort({ port: getPort.makeRange(5555, 5600) })
@@ -669,19 +671,16 @@ export default SantaPlugin.create(project => {
       const instance = new StudioServer({
         port,
         debug: false,
-        binaryPath: firstExistingPath.path,
-        photonWorkerPath,
-        photonGenerator: {
-          providerAliases: PROVIDER_ALIASES,
-          // TODO this version should stay in sync with what the yarn lock file
-          // contains for entry @prisma/photo
-          version: '2.0.0-preview019',
-        },
+        // binaryPath: firstExistingPath.path,
+        // photonWorkerPath,
+        // photonGenerator: {
+        //   providerAliases: PROVIDER_ALIASES,
+        //   // TODO this version should stay in sync with what the yarn lock file
+        //   // contains for entry @prisma/photo
+        //   version: '2.0.0-preview019',
+        // },
         schemaPath: schema,
-        reactAppDir: Path.join(
-          Path.dirname(require.resolve('@prisma/studio/package.json')),
-          'build'
-        ),
+        photon: {}, //TODO: Sid, help us plz
       })
 
       await instance.start()

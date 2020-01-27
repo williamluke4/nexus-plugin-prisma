@@ -26,7 +26,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "tsdx lint"
+      "pre-commit": "pretty-quick --staged"
     }
   },
   "prettier": {
@@ -35,35 +35,36 @@
     "trailingComma": "es5"
   },
   "devDependencies": {
-    "@babel/core": "^7.7.5",
+    "@babel/core": "^7.8.3",
     "@types/common-tags": "^1.8.0",
-    "@types/jest": "^24.0.24",
+    "@types/jest": "^24.9.1",
     "@types/prismjs": "^1.16.0",
-    "dripip": "^0.3.2",
-    "graphql-santa": "^0.2.0",
-    "husky": "^3.1.0",
+    "dripip": "^0.5.0",
+    "graphql-santa": "^0.3.0",
+    "husky": "^4.2.1",
     "node-fetch": "^2.6.0",
     "prettier": "^1.19.1",
+    "pretty-quick": "^2.0.1",
     "tsdx": "^0.12.0",
     "tslib": "^1.10.0",
-    "typescript": "^3.7.3"
+    "typescript": "^3.7.5"
   },
   "dependencies": {
-    "@prisma/generator-helper": "^0.0.31",
-    "@prisma/photon": "2.0.0-preview019",
-    "@prisma/sdk": "^0.0.133",
-    "@prisma/studio-server": "^0.179.0",
+    "@prisma/client": "^2.0.0-preview020.3",
+    "@prisma/generator-helper": "^0.0.38",
+    "@prisma/sdk": "^0.0.172",
+    "@prisma/studio-server": "^0.189.0",
     "chalk": "^3.0.0",
     "common-tags": "^1.8.0",
     "fs-jetpack": "^2.2.3",
-    "get-port": "^5.1.0",
-    "nexus-prisma": "^0.6.2-next.3",
+    "get-port": "^5.1.1",
+    "nexus-prisma": "^0.7.0",
     "open": "^7.0.0",
-    "prisma2": "2.0.0-preview019",
-    "prismjs": "^1.17.1",
+    "prisma2": "2.0.0-preview020.3",
+    "prismjs": "^1.19.0",
     "stacktrace-parser": "^0.1.8"
   },
   "prisma": {
-    "version": "e7579bd35e0938dbf773f1706c098a0d14a5a038"
+    "version": "45dd3493ff2fd09b5a8cdf697de276e368f7ebee"
   }
 }
