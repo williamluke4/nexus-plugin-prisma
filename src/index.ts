@@ -38,6 +38,11 @@ type OptionsWithHook = Options & {
   onUnknownFieldType: (params: UnknownFieldType) => void
 }
 
+/**
+ * Pinned query-engine version. Calculated at build time and based on `prisma2` version
+ */
+const PRISMA_QUERY_ENGINE_VERSION = require('../package.json').prisma.version
+
 // HACK
 // 1. https://prisma-company.slack.com/archives/C8AKVD5HU/p1574267904197600
 // 2. https://prisma-company.slack.com/archives/CEYCG2MCN/p1574267824465700
@@ -797,6 +802,7 @@ async function getGenerators(schemaPath: string) {
   return await Prisma.getGenerators({
     schemaPath,
     printDownloadProgress: false,
+    version: PRISMA_QUERY_ENGINE_VERSION,
   })
 }
 
