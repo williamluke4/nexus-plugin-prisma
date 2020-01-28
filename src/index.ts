@@ -5,8 +5,8 @@ import { stripIndent } from 'common-tags'
 import * as fs from 'fs-jetpack'
 import getPort from 'get-port'
 import { shouldGenerateArtifacts } from 'nexus-future/dist/framework/nexus'
-import * as NexusPlugin from 'nexus-future/plugin'
 import { SuccessfulRunResult } from 'nexus-future/dist/utils'
+import * as NexusPlugin from 'nexus-future/plugin'
 import { nexusPrismaPlugin, Options } from 'nexus-prisma'
 import open from 'open'
 import * as Path from 'path'
@@ -110,6 +110,7 @@ export default NexusPlugin.create(project => {
             outputs: {
               typegen: nexusPrismaTypegenOutput,
             },
+            prismaClient: ctx => ctx.db,
             shouldGenerateArtifacts: shouldGenerateArtifacts(),
             onUnknownFieldName: params => renderUnknownFieldNameError(params),
             onUnknownFieldType: params => renderUnknownFieldTypeError(params),
