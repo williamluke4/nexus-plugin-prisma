@@ -22,7 +22,7 @@
     "postinstall": "mkdir -p \"$PWD/../@types/nexus-plugin-prisma\" && cp \"$PWD/global-type.d.ts\" \"$PWD/../@types/nexus-plugin-prisma/index.d.ts\""
   },
   "peerDependencies": {
-    "nexus-future": "^0.4.0"
+    "nexus-future": "^0.5.0"
   },
   "husky": {
     "hooks": {
@@ -41,7 +41,7 @@
     "@types/prismjs": "^1.16.0",
     "dripip": "^0.5.0",
     "husky": "^4.2.1",
-    "nexus-future": "^0.4.0",
+    "nexus-future": "^0.5.0",
     "node-fetch": "^2.6.0",
     "prettier": "^1.19.1",
     "pretty-quick": "^2.0.1",
@@ -52,13 +52,13 @@
   "dependencies": {
     "@prisma/client": "^2.0.0-preview020.3",
     "@prisma/generator-helper": "^0.0.38",
-    "@prisma/sdk": "^0.0.172",
-    "@prisma/studio-server": "^0.189.0",
+    "@prisma/sdk": "^0.0.175",
+    "@prisma/studio-server": "^0.190.0",
     "chalk": "^3.0.0",
     "common-tags": "^1.8.0",
     "fs-jetpack": "^2.2.3",
     "get-port": "^5.1.1",
-    "nexus-prisma": "^0.7.0",
+    "nexus-prisma": "^0.8.0",
     "open": "^7.0.0",
     "prisma2": "2.0.0-preview020.3",
     "prismjs": "^1.19.0",
