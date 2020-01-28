@@ -283,7 +283,7 @@ export default NexusPlugin.create(project => {
         `)
         project.utils.log.info(stripIndent`
           2. Run \`${chalk.greenBright(
-            packageManager.renderRunBin('nexus db init')
+            packageManager.renderRunBin('nexus-future db init')
           )}\` to initialize your database.
         `)
         project.utils.log.info(stripIndent`
@@ -909,11 +909,14 @@ function handleLiftResponse(
     console.log(
       response.stdout
         .replace(/Migrate/g, 'nexus-future')
-        .replace(/prisma2 lift up/g, 'nexus db migrate apply')
+        .replace(/prisma2 lift up/g, 'nexus-future db migrate apply')
         .replace(/migrate up --preview/g, '')
         .replace(/migrate up/g, '')
         .replace(/lift save --name init/, '')
-        .replace(/To apply the migrations, run nexus db migrate apply/g, '')
+        .replace(
+          /To apply the migrations, run nexus-future db migrate apply/g,
+          ''
+        )
     )
   }
 
