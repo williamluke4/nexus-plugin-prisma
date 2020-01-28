@@ -19,10 +19,10 @@
     "release:preview": "dripip preview",
     "publish:pr": "PR=$(hub pr show -f '%I') && yarn publish --tag pr.${PR} --no-git-tag-version --new-version \"0.0.0-pr.${PR}.$(git show -s head --format='%h')\" && git checkout package.json",
     "prepack": "yarn -s build",
-    "postinstall": "mkdir -p \"$PWD/../@types/graphql-santa-plugin-prisma\" && cp \"$PWD/global-type.d.ts\" \"$PWD/../@types/graphql-santa-plugin-prisma/index.d.ts\""
+    "postinstall": "mkdir -p \"$PWD/../@types/nexus-plugin-prisma\" && cp \"$PWD/global-type.d.ts\" \"$PWD/../@types/nexus-plugin-prisma/index.d.ts\""
   },
   "peerDependencies": {
-    "graphql-santa": "^0.2.0"
+    "nexus-future": "^0.4.0"
   },
   "husky": {
     "hooks": {
@@ -40,8 +40,8 @@
     "@types/jest": "^24.9.1",
     "@types/prismjs": "^1.16.0",
     "dripip": "^0.5.0",
-    "graphql-santa": "^0.3.0",
     "husky": "^4.2.1",
+    "nexus-future": "^0.4.0",
     "node-fetch": "^2.6.0",
     "prettier": "^1.19.1",
     "pretty-quick": "^2.0.1",

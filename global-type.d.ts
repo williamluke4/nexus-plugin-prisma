@@ -2,7 +2,7 @@
 import { PrismaClient } from '@prisma/client'
 
 declare global {
-  interface GraphQLSantaTestContextApp {
+  interface nexusFutureTestContextApp {
     db: {
       client: PrismaClient
     }

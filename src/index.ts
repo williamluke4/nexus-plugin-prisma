@@ -4,9 +4,9 @@ import chalk from 'chalk'
 import { stripIndent } from 'common-tags'
 import * as fs from 'fs-jetpack'
 import getPort from 'get-port'
-import { shouldGenerateArtifacts } from 'graphql-santa/dist/framework/nexus'
-import * as SantaPlugin from 'graphql-santa/plugin'
-import { SuccessfulRunResult } from 'graphql-santa/dist/utils'
+import { shouldGenerateArtifacts } from 'nexus-future/dist/framework/nexus'
+import * as NexusPlugin from 'nexus-future/plugin'
+import { SuccessfulRunResult } from 'nexus-future/dist/utils'
 import { nexusPrismaPlugin, Options } from 'nexus-prisma'
 import open from 'open'
 import * as Path from 'path'
@@ -56,7 +56,7 @@ const getPrismaClientInstance = () => {
   return prismaClientInstance
 }
 
-export default SantaPlugin.create(project => {
+export default NexusPlugin.create(project => {
   const nexusPrismaTypegenOutput = fs.path(
     'node_modules/@types/typegen-nexus-prisma/index.d.ts'
   )
@@ -204,7 +204,7 @@ export default SantaPlugin.create(project => {
         fs.writeAsync(
           layout.sourcePath('schema.ts'),
           stripIndent`
-            import { app } from "graphql-santa"
+            import { app } from "nexus-future"
     
             app.objectType({
               name: "World",
@@ -250,7 +250,7 @@ export default SantaPlugin.create(project => {
 
       if (hctx.connectionURI || hctx.database === 'SQLite') {
         project.utils.log.info('Initializing development database...')
-        // TODO expose run on graphql-santa
+        // TODO expose run on nexus-future
         await packageManager.runBin(
           'prisma2 lift save --create-db --name init',
           {
@@ -276,7 +276,7 @@ export default SantaPlugin.create(project => {
         `)
         project.utils.log.info(stripIndent`
           2. Run \`${chalk.greenBright(
-            packageManager.renderRunBin('santa db init')
+            packageManager.renderRunBin('nexus db init')
           )}\` to initialize your database.
         `)
         project.utils.log.info(stripIndent`
@@ -531,7 +531,7 @@ export default SantaPlugin.create(project => {
    * Find the PSL file in the project. If multiple are found a warning is logged.
    */
   async function maybeFindPrismaSchema(): Promise<null | string> {
-    // TODO ...base ignores from graphql-santa... graphql-santa.fs.findAsync?
+    // TODO ...base ignores from nexus-future... nexus-future.fs.findAsync?
     const schemaPaths = await fs.findAsync({
       matching: [
         'schema.prisma',
@@ -543,7 +543,7 @@ export default SantaPlugin.create(project => {
     if (schemaPaths.length > 1) {
       project.utils.log.warn(
         `We found multiple "schema.prisma" files in your project.\n${schemaPaths
-          .map((p, i) => `- "${p}"${i === 0 ? ' (used by graphql-santa)' : ''}`)
+          .map((p, i) => `- "${p}"${i === 0 ? ' (used by nexus-future)' : ''}`)
           .join('\n')}`
       )
     }
@@ -747,11 +747,11 @@ function renderUnknownFieldTypeError(params: UnknownFieldType) {
 //   const schemaPath = await maybeFindPrismaSchema();
 
 //   if (schemaPath === null) {
-//     graphql-santa.utils.log.trace('detected that this is not prisma framework project');
+//     nexus-future.utils.log.trace('detected that this is not prisma framework project');
 //     return { enabled: false };
 //   }
 
-//   graphql-santa.utils.log.trace('detected that this is a prisma framework project');
+//   nexus-future.utils.log.trace('detected that this is a prisma framework project');
 //   return { enabled: true, schemaPath: fs.path(schemaPath) };
 // }
 
@@ -776,17 +776,17 @@ function renderUnknownFieldTypeError(params: UnknownFieldType) {
 //   if (schemaPaths.length > 1) {
 //     console.warn(
 //       `Warning: we found multiple "schema.prisma" files in your project.\n${schemaPaths
-//         .map((p, i) => `- \"${p}\"${i === 0 ? ' (used by graphql-santa)' : ''}`)
+//         .map((p, i) => `- \"${p}\"${i === 0 ? ' (used by nexus-future)' : ''}`)
 //         .join('\n')}`
 //     );
 //   }
 
 //   if (schemaPaths.length === 0) {
-//     graphql-santa.utils.log.trace('detected that this is not prisma framework project');
+//     nexus-future.utils.log.trace('detected that this is not prisma framework project');
 //     return { enabled: false };
 //   }
 
-//   graphql-santa.utils.log.trace('detected that this is a prisma framework project');
+//   nexus-future.utils.log.trace('detected that this is a prisma framework project');
 //   return { enabled: true, schemaPath: fs.path(schemaPaths[0]) };
 // }
 
@@ -874,7 +874,7 @@ function renderConnectionURI(
 }
 
 function handleLiftResponse(
-  project: SantaPlugin.Lens,
+  project: NexusPlugin.Lens,
   response: SuccessfulRunResult,
   message: string,
   options: { silentStdout: boolean } = { silentStdout: false }
@@ -890,16 +890,16 @@ function handleLiftResponse(
     return false
   }
 
-  // HACK TODO: replace lift logs with graphql-santa logs....
+  // HACK TODO: replace lift logs with nexus-future logs....
   if (response.stdout && !options.silentStdout) {
     console.log(
       response.stdout
-        .replace(/Lift/g, 'graphql-santa')
-        .replace(/prisma2 lift up/g, 'santa db migrate apply')
+        .replace(/Lift/g, 'nexus-future')
+        .replace(/prisma2 lift up/g, 'nexus db migrate apply')
         .replace(/🏋️‍ lift up --preview/g, '')
         .replace(/🏋️‍ lift up/g, '')
         .replace(/📼 {2}lift save --name init/, '')
-        .replace(/To apply the migrations, run santa db migrate apply/g, '')
+        .replace(/To apply the migrations, run nexus db migrate apply/g, '')
     )
   }
 
