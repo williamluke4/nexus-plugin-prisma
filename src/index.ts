@@ -257,12 +257,14 @@ export default NexusPlugin.create(project => {
         project.utils.log.info('Initializing development database...')
         // TODO expose run on nexus-future
         await packageManager.runBin(
-          'prisma2 lift save --create-db --name init',
+          'prisma2 migrate save --create-db --name init --experimental',
           {
             require: true,
           }
         )
-        await packageManager.runBin('prisma2 lift up', { require: true })
+        await packageManager.runBin('prisma2 migrate up --experimental', {
+          require: true,
+        })
 
         project.utils.log.info('Generating Prisma Client JS...')
         await packageManager.runBin('prisma2 generate', { require: true })
@@ -312,7 +314,7 @@ export default NexusPlugin.create(project => {
     const migrateDb = simpleDebounce(async () => {
       project.utils.log.info(`Prisma Schema change detected, migrating...`)
       // Raw code being run is this https://github.com/prisma/lift/blob/dce60fe2c44e8a0d951d961187aec95a50a33c6f/src/cli/commands/LiftTmpPrepare.ts#L33-L45
-      project.utils.log.trace('running lift...')
+      project.utils.log.trace('running prisma migrate...')
       const result = await project.utils.run('prisma2 tmp-prepare', {
         require: true,
       })
@@ -349,7 +351,7 @@ export default NexusPlugin.create(project => {
       init: {
         onStart: async () => {
           const initResponse = await packageManager.runBin(
-            'prisma2 lift save --name init --create-db',
+            'prisma2 migrate save --name init --create-db --experimental',
             { envAdditions: { FORCE_COLOR: 'true' } }
           )
 
@@ -362,7 +364,7 @@ export default NexusPlugin.create(project => {
             )
           ) {
             const migrateResponse = await packageManager.runBin(
-              'prisma2 lift up --auto-approve',
+              'prisma2 migrate up --auto-approve --experimental',
               { envAdditions: { FORCE_COLOR: 'true' } }
             )
             if (
@@ -382,7 +384,7 @@ export default NexusPlugin.create(project => {
           onStart: async hctx => {
             if (!hctx.force) {
               const previewResponse = await packageManager.runBin(
-                'prisma2 lift up --preview',
+                'prisma2 migrate up --preview --experimental',
                 { envAdditions: { FORCE_COLOR: 'true' } }
               )
 
@@ -417,9 +419,12 @@ export default NexusPlugin.create(project => {
             }
 
             console.log()
-            const response = await packageManager.runBin('prisma2 lift up', {
-              envAdditions: { FORCE_COLOR: 'true' },
-            })
+            const response = await packageManager.runBin(
+              'prisma2 migrate up --experimental',
+              {
+                envAdditions: { FORCE_COLOR: 'true' },
+              }
+            )
 
             handleLiftResponse(
               project,
@@ -447,7 +452,7 @@ export default NexusPlugin.create(project => {
             }
 
             const response = await packageManager.runBin(
-              `prisma2 lift save --name=${migrationName}`,
+              `prisma2 migrate save  --experimental --name=${migrationName}`,
               { envAdditions: { FORCE_COLOR: 'true' } }
             )
 
@@ -460,9 +465,12 @@ export default NexusPlugin.create(project => {
         },
         rollback: {
           onStart: async () => {
-            const response = await packageManager.runBin('prisma2 lift down', {
-              envAdditions: { FORCE_COLOR: 'true' },
-            })
+            const response = await packageManager.runBin(
+              'prisma2 migrate down --experimental',
+              {
+                envAdditions: { FORCE_COLOR: 'true' },
+              }
+            )
 
             handleLiftResponse(
               project,
@@ -900,11 +908,11 @@ function handleLiftResponse(
   if (response.stdout && !options.silentStdout) {
     console.log(
       response.stdout
-        .replace(/Lift/g, 'nexus-future')
+        .replace(/Migrate/g, 'nexus-future')
         .replace(/prisma2 lift up/g, 'nexus db migrate apply')
-        .replace(/🏋️‍ lift up --preview/g, '')
-        .replace(/🏋️‍ lift up/g, '')
-        .replace(/📼 {2}lift save --name init/, '')
+        .replace(/migrate up --preview/g, '')
+        .replace(/migrate up/g, '')
+        .replace(/lift save --name init/, '')
         .replace(/To apply the migrations, run nexus db migrate apply/g, '')
     )
   }
