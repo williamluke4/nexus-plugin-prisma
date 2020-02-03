@@ -1,5 +1,5 @@
-import { getPlatform } from '@prisma/get-platform'
 import * as Prisma from '@prisma/sdk'
+import StudioServer from '@prisma/studio-server'
 import chalk from 'chalk'
 import { stripIndent } from 'common-tags'
 import * as fs from 'fs-jetpack'
@@ -483,11 +483,13 @@ export default NexusPlugin.create(project => {
       },
       ui: {
         onStart: async hctx => {
-          const port = hctx.port ?? 5555
-          const studio = await startStudio(port)
+          const studio = await startStudio(hctx.port)
 
-          if (studio?.port) {
+          if (studio) {
+            await studio?.instance.start()
+
             await open(`http://localhost:${studio.port}`)
+
             project.utils.log.info(`Studio started`, {
               url: `http://localhost:${studio.port}`,
             })
@@ -626,10 +628,8 @@ export default NexusPlugin.create(project => {
 
   async function startStudio(
     port: number | undefined
-  ): Promise<{ port: number } | null> {
+  ): Promise<{ port: number; instance: StudioServer } | null> {
     try {
-      const StudioServer = (await import('@prisma/studio-server')).default
-
       if (!port) {
         port = await getPort({ port: getPort.makeRange(5555, 5600) })
       }
@@ -646,18 +646,15 @@ export default NexusPlugin.create(project => {
         debug: false,
         schemaPath: schema,
         prismaClient: {
-          dir: '', //TODO: Prisma Client directory
+          dir: GENERATED_PRISMA_CLIENT_OUTPUT_PATH,
         },
       })
 
-      await instance.start()
-
-      return { port }
+      return { port, instance }
     } catch (e) {
       project.utils.log.error(e)
+      return null
     }
-
-    return null
   }
 })
 
