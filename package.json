@@ -53,7 +53,7 @@
     "@prisma/client": "^2.0.0-preview020.3",
     "@prisma/generator-helper": "^0.0.38",
     "@prisma/sdk": "^0.0.175",
-    "@prisma/studio-server": "^0.190.0",
+    "@prisma/studio-server": "^0.193.0",
     "chalk": "^3.0.0",
     "common-tags": "^1.8.0",
     "fs-jetpack": "^2.2.3",

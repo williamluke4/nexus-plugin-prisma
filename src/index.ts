@@ -628,48 +628,7 @@ export default NexusPlugin.create(project => {
     port: number | undefined
   ): Promise<{ port: number } | null> {
     try {
-      const platform = await getPlatform()
-      const extension = platform === 'windows' ? '.exe' : ''
-
-      const pathCandidates = [
-        // ncc go home
-        // tslint:disable-next-line
-        Path.join(
-          __dirname,
-          `../../@prisma/sdk/query-engine-${platform}${extension}`
-        ),
-      ]
-
-      const pathsExist = await Promise.all(
-        pathCandidates.map(async candidate => ({
-          exists: fs.exists(candidate),
-          path: candidate,
-        }))
-      )
-
-      const firstExistingPath = pathsExist.find(p => p.exists)
-
-      if (!firstExistingPath) {
-        throw new Error(
-          `Could not find any Prisma2 query-engine binary for Studio. Looked in ${pathCandidates.join(
-            ', '
-          )}`
-        )
-      }
-
       const StudioServer = (await import('@prisma/studio-server')).default
-
-      // let photonWorkerPath: string | undefined
-      // try {
-      //   const studioTransport = require.resolve('@prisma/studio-transports')
-      //   photonWorkerPath = Path.join(
-      //     Path.dirname(studioTransport),
-      //     'photon-worker.js'
-      //   )
-      // } catch (e) {
-      //   project.utils.log.error(e)
-      //   return null
-      // }
 
       if (!port) {
         port = await getPort({ port: getPort.makeRange(5555, 5600) })
@@ -685,16 +644,10 @@ export default NexusPlugin.create(project => {
       const instance = new StudioServer({
         port,
         debug: false,
-        // binaryPath: firstExistingPath.path,
-        // photonWorkerPath,
-        // photonGenerator: {
-        //   providerAliases: PROVIDER_ALIASES,
-        //   // TODO this version should stay in sync with what the yarn lock file
-        //   // contains for entry @prisma/photo
-        //   version: '2.0.0-preview019',
-        // },
         schemaPath: schema,
-        photon: {}, //TODO: Sid, help us plz
+        prismaClient: {
+          dir: '', //TODO: Prisma Client directory
+        },
       })
 
       await instance.start()
