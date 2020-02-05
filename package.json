@@ -15,6 +15,7 @@
     "build": "node build-scripts/update-hash.js && tsdx build",
     "test": "tsdx test",
     "lint": "tsdx lint",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "release:stable": "dripip stable",
     "release:preview": "dripip preview",
     "publish:pr": "PR=$(hub pr show -f '%I') && yarn publish --tag pr.${PR} --no-git-tag-version --new-version \"0.0.0-pr.${PR}.$(git show -s head --format='%h')\" && git checkout package.json",
