@@ -115,7 +115,7 @@ export default NexusPlugin.create(project => {
             onUnknownFieldName: params => renderUnknownFieldNameError(params),
             onUnknownFieldType: params => renderUnknownFieldTypeError(params),
           } as OptionsWithHook),
-        ],
+        ] as any, //TODO: REMOVE ME ONCE THE TRANSITION WITH NEXUS IS DONE. Reason: Type conflict between nexus and @nexus/schema
       },
     }
   })
