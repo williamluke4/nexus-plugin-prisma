@@ -42,7 +42,7 @@
     "@types/prismjs": "^1.16.0",
     "dripip": "^0.5.0",
     "husky": "^4.2.1",
-    "nexus-future": "^0.5.0",
+    "nexus-future": "^0.7.0",
     "node-fetch": "^2.6.0",
     "prettier": "^1.19.1",
     "pretty-quick": "^2.0.1",
@@ -51,7 +51,7 @@
     "typescript": "^3.7.5"
   },
   "dependencies": {
-    "@prisma/client": "^2.0.0-preview020.3",
+    "@prisma/client": "^2.0.0-preview021",
     "@prisma/generator-helper": "^0.0.38",
     "@prisma/sdk": "^0.0.182",
     "@prisma/studio-server": "0.195.0",
@@ -67,6 +67,6 @@
     "stacktrace-parser": "^0.1.8"
   },
   "prisma": {
-    "version": "45dd3493ff2fd09b5a8cdf697de276e368f7ebee"
+    "version": "4f8eb5bd9628db47402dc855ad0b6c7cfc915d46"
   }
 }

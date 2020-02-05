@@ -1117,7 +1117,7 @@
   dependencies:
     "@types/node" ">= 8"
 
-"@prisma/client@^2.0.0-preview020.3":
+"@prisma/client@^2.0.0-preview021":
   version "2.0.0-preview021"
   resolved "https://registry.yarnpkg.com/@prisma/client/-/client-2.0.0-preview021.tgz#7205345e3faa09278f3de104bb8af60e063420ad"
   integrity sha512-pKU6p1r5gBwmQ6fa+zy6hQ/IAw6AsUWQ1VRZ9xy6i1zidsvGDzbSFzihqI9aBXB0ed0sdbijiGcujsG2tHBTYw==
@@ -6101,8 +6101,10 @@ negotiator@0.6.2:
   resolved "https://registry.yarnpkg.com/negotiator/-/negotiator-0.6.2.tgz#feacf7ccf525a77ae9634436a64883ffeca346fb"
   integrity sha512-hZXc7K2e+PgeI1eDBe/10Ard4ekbfrrqG8Ep+8Jmf4JID2bNg7NvCPOZN+kfF574pFQI7mum2AUqDidoKqcTOw==
 
-"nexus-future@file:.yalc/nexus-future":
-  version "0.0.0-dripip-58417ab6"
+nexus-future@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/nexus-future/-/nexus-future-0.7.0.tgz#16a1ba506aaab644c1d6776265ca57b104652dc6"
+  integrity sha512-d0tLo34OHBBIy80yBxZpWiDW0QIeExQinHZ25sTAPrITEiR3lyJvFyjMKMZYVFXvY8baop9EVtDHCBhLOAThWA==
   dependencies:
     "@nexus/schema" "^0.12.0-rc.9"
     "@types/express" "^4.17.2"
