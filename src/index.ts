@@ -230,7 +230,7 @@ export default NexusPlugin.create(project => {
                   },
                   async resolve(_root, args, ctx) {
                     const worldToFindByName = args.world ?? 'Earth'
-                    const world = await ctx.db.worlds.findOne({
+                    const world = await ctx.db.world.findOne({
                       where: {
                         name: worldToFindByName
                       }
