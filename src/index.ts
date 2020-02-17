@@ -284,7 +284,7 @@ export default NexusPlugin.create(project => {
         `)
         project.utils.log.info(stripIndent`
           2. Run \`${chalk.greenBright(
-            packageManager.renderRunBin('nexus-future db init')
+            packageManager.renderRunBin('nexus db init')
           )}\` to initialize your database.
         `)
         project.utils.log.info(stripIndent`
