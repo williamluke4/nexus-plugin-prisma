@@ -198,7 +198,7 @@ export default NexusPlugin.create(project => {
                     name: 'Mars',
                     population: 0,
                   },
-                ].map(data => db.worlds.create({ data })),
+                ].map(data => db.world.create({ data })),
               )
             
               console.log('Seeded: %j', results)
@@ -210,9 +210,9 @@ export default NexusPlugin.create(project => {
         fs.writeAsync(
           layout.sourcePath('graphql.ts'),
           stripIndent`
-            import { app } from "nexus-future"
+            import { schema } from "nexus-future"
     
-            app.objectType({
+            schema.objectType({
               name: "World",
               definition(t) {
                 t.model.id()
@@ -221,12 +221,12 @@ export default NexusPlugin.create(project => {
               }
             })
     
-            app.queryType({
+            schema.queryType({
               definition(t) {
                 t.field("hello", {
                   type: "World",
                   args: {
-                    world: app.stringArg({ required: false })
+                    world: schema.stringArg({ required: false })
                   },
                   async resolve(_root, args, ctx) {
                     const worldToFindByName = args.world ?? 'Earth'
@@ -245,7 +245,7 @@ export default NexusPlugin.create(project => {
                 t.list.field('worlds', {
                   type: 'World',
                   resolve(_root, _args, ctx) { 
-                    return ctx.db.worlds.findMany()
+                    return ctx.db.world.findMany()
                   }
                 })
               }
