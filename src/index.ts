@@ -208,7 +208,7 @@ export default NexusPlugin.create(project => {
           `
         ),
         fs.writeAsync(
-          layout.sourcePath('schema.ts'),
+          layout.sourcePath('graphql.ts'),
           stripIndent`
             import { app } from "nexus-future"
     
