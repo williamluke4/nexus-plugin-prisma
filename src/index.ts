@@ -385,7 +385,7 @@ export default NexusPlugin.create(project => {
           onStart: async hctx => {
             if (!hctx.force) {
               const previewResponse = await packageManager.runBin(
-                'prisma2 migrate up --preview --experimental',
+                'prisma2 migrate up --preview --auto-approve --experimental',
                 { envAdditions: { FORCE_COLOR: 'true' } }
               )
 
@@ -421,7 +421,7 @@ export default NexusPlugin.create(project => {
 
             console.log()
             const response = await packageManager.runBin(
-              'prisma2 migrate up --experimental',
+              'prisma2 migrate up --auto-approve --experimental',
               {
                 envAdditions: { FORCE_COLOR: 'true' },
               }
@@ -453,7 +453,7 @@ export default NexusPlugin.create(project => {
             }
 
             const response = await packageManager.runBin(
-              `prisma2 migrate save  --experimental --name=${migrationName}`,
+              `prisma2 migrate save --name="${migrationName}" --experimental`,
               { envAdditions: { FORCE_COLOR: 'true' } }
             )
 
@@ -859,15 +859,17 @@ function handleLiftResponse(
   if (response.stdout && !options.silentStdout) {
     console.log(
       response.stdout
-        .replace(/Migrate/g, 'nexus-future')
-        .replace(/prisma2 lift up/g, 'nexus-future db migrate apply')
-        .replace(/migrate up --preview/g, '')
-        .replace(/migrate up/g, '')
-        .replace(/lift save --name init/, '')
+        .replace(/prisma2 migrate up --experimental/g, 'nexus db migrate apply')
         .replace(
-          /To apply the migrations, run nexus-future db migrate apply/g,
+          /To apply the migrations, run \[92mprisma2 migrate up --experimental/g,
           ''
         )
+        .replace(
+          /To apply the migrations, run \[92mnexus db migrate apply\[39m/g,
+          ''
+        )
+        .replace(/🏋️‍  migrate up --preview/g, '')
+        .replace(/🏋️‍  migrate up/g, '')
     )
   }
 
