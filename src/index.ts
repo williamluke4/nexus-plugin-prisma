@@ -443,17 +443,24 @@ export default NexusPlugin.create(project => {
                 type: 'text',
                 name: 'name',
                 message: `Name of your migration`,
-                validate: (value: string) =>
-                  value.length > 0
-                    ? true
-                    : 'Your migration needs to have a least one character',
+                validate: (value: string) => {
+                  if (value.length === 0) {
+                    return 'Migration names needs to have a least one character'
+                  }
+
+                  if (value.includes(' ')) {
+                    return "Migration names cannot contain spaces. Use '-' instead"
+                  }
+
+                  return true
+                },
               })
 
               migrationName = inputMigration.name
             }
 
             const response = await packageManager.runBin(
-              `prisma2 migrate save --name="${migrationName}" --experimental`,
+              `prisma2 migrate save --experimental --name ${migrationName}`,
               { envAdditions: { FORCE_COLOR: 'true' } }
             )
 
