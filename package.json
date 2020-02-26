@@ -14,6 +14,7 @@
     "dev": "tsdx watch",
     "build": "node build-scripts/update-hash.js && tsdx build",
     "test": "tsdx test",
+    "test:e2e": "jest --testTimeout=240000 test/e2e",
     "lint": "tsdx lint",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "release:stable": "dripip stable",
@@ -23,7 +24,7 @@
     "postinstall": "mkdir -p \"$PWD/../@types/nexus-plugin-prisma\" && cp \"$PWD/global-type.d.ts\" \"$PWD/../@types/nexus-plugin-prisma/index.d.ts\""
   },
   "peerDependencies": {
-    "nexus-future": "^0.8.0"
+    "nexus-future": "^0.0.0-pr.419.17.135d958"
   },
   "husky": {
     "hooks": {
@@ -42,10 +43,12 @@
     "@types/prismjs": "^1.16.0",
     "dripip": "^0.6.1",
     "husky": "^4.2.1",
-    "nexus-future": "^0.8.0",
+    "nexus-future": "^0.0.0-pr.419.17.135d958",
     "node-fetch": "^2.6.0",
+    "node-pty": "^0.9.0",
     "prettier": "^1.19.1",
     "pretty-quick": "^2.0.1",
+    "strip-ansi": "^6.0.0",
     "tsdx": "^0.12.0",
     "tslib": "^1.11.0",
     "typescript": "^3.8.2"
@@ -68,5 +71,9 @@
   },
   "prisma": {
     "version": "f608db3b9e4f50f9a384356e532357b0a525969a"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node"
   }
 }
