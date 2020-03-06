@@ -263,7 +263,7 @@ export default NexusPlugin.create(project => {
             require: true,
           }
         )
-        await packageManager.runBin('prisma2 migrate up --experimental', {
+        await packageManager.runBin('prisma2 migrate up -c --experimental', {
           require: true,
         })
 
@@ -365,7 +365,7 @@ export default NexusPlugin.create(project => {
             )
           ) {
             const migrateResponse = await packageManager.runBin(
-              'prisma2 migrate up --auto-approve --experimental',
+              'prisma2 migrate up -c --auto-approve --experimental',
               { envAdditions: { FORCE_COLOR: 'true' } }
             )
             if (
