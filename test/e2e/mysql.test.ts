@@ -14,8 +14,15 @@ const ctx = setupE2EContext({
 
 test('e2e with mysql', async () => {
   console.log(ctx.projectDir)
+
+  let nexusVersion = process.env.NEXUS_VERSION ?? 'stable'
   // Run npx nexus from local path
-  const initResult = await ctx.spawnNPXNexus('npm', 'MySQL', 'next', () => {})
+  const initResult = await ctx.spawnNPXNexus(
+    'npm',
+    'MySQL',
+    nexusVersion,
+    () => {}
+  )
 
   expect(stripAnsi(initResult.data)).toContain(
     'Run `npm run -s dev` to start working'

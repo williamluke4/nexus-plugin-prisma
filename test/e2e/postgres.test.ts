@@ -11,11 +11,14 @@ const ctx = setupE2EContext({
 
 test('e2e with postgres', async () => {
   console.log(ctx.projectDir)
+
+  let nexusVersion = process.env.NEXUS_VERSION ?? 'stable'
+
   // Run npx nexus from local path
   const initResult = await ctx.spawnNPXNexus(
     'npm',
     'PostgreSQL',
-    'next',
+    nexusVersion,
     () => {}
   )
 
