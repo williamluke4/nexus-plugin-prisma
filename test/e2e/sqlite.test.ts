@@ -11,11 +11,14 @@ const ctx = setupE2EContext({
 
 test('e2e with sqlite', async () => {
   console.log(ctx.projectDir)
+
+  let nexusVersion = process.env.NEXUS_VERSION ?? 'stable'
+
   // Run npx nexus
   const createAppResult = await ctx.spawnNPXNexus(
     'npm',
     'SQLite',
-    'next',
+    nexusVersion,
     (data, proc) => {
       if (stripAnsi(data).includes('server:listening')) {
         proc.kill()
