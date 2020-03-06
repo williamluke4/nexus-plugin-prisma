@@ -49,6 +49,7 @@ jobs:
       matrix:
         node-version: [10.x, 12.x]
         database: [sqlite, postgres, mysql]
+        nexus-version: [latest, next]
     services:
       postgres:
         image: postgres:10.8
@@ -95,5 +96,7 @@ jobs:
             echo "Failed to extract version"
             exit 1
           fi
+
+          export NEXUS_VERSION=${{ matrix.nexus-version }}
 
           yarn test:e2e:${{ matrix.database }}
