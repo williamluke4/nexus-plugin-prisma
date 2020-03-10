@@ -46,7 +46,7 @@
     "@types/prismjs": "1.16.0",
     "dripip": "0.7.1",
     "husky": "4.2.3",
-    "nexus-future": "0.10.0-next.23",
+    "nexus-future": "0.10.0",
     "node-fetch": "2.6.0",
     "node-pty": "0.9.0",
     "prettier": "1.19.1",
@@ -72,7 +72,7 @@
     "stacktrace-parser": "^0.1.9"
   },
   "prisma": {
-    "version": "f608db3b9e4f50f9a384356e532357b0a525969a"
+    "version": "d3b0ceed5d87544b9d2decb70e08664f9047bb73"
   },
   "jest": {
     "preset": "ts-jest",
