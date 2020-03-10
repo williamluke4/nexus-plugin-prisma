@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "dev": "tsdx watch",
-    "build": "node build-scripts/update-hash.js && tsdx build",
+    "build": "yarn clean && node build-scripts/update-hash.js && tsdx build",
     "build:ci": "tsdx build",
     "test": "tsdx test",
     "test:e2e:mysql": "yarn test test/e2e/mysql.test.ts --testTimeout=400000",
