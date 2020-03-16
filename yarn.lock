@@ -5963,10 +5963,10 @@ negotiator@0.6.2:
   resolved "https://registry.yarnpkg.com/negotiator/-/negotiator-0.6.2.tgz#feacf7ccf525a77ae9634436a64883ffeca346fb"
   integrity sha512-hZXc7K2e+PgeI1eDBe/10Ard4ekbfrrqG8Ep+8Jmf4JID2bNg7NvCPOZN+kfF574pFQI7mum2AUqDidoKqcTOw==
 
-nexus-future@0.11.0:
-  version "0.11.0"
-  resolved "https://registry.yarnpkg.com/nexus-future/-/nexus-future-0.11.0.tgz#2c81062c566477c000ad58213fade40de62691fa"
-  integrity sha512-MDt3wZ5skArReHWQghUQzUTVCozr12DvxJdJWfr8CbIvgtNjQD68Zq2yIVORTIUNCQXxx7rpjW6tlgco7aPuaw==
+nexus-future@^0.11.2:
+  version "0.11.2"
+  resolved "https://registry.yarnpkg.com/nexus-future/-/nexus-future-0.11.2.tgz#e9b74c6453cabd1fa7b42963b76b1a8d7362a029"
+  integrity sha512-QJgYm3kvGjLKtPmxaHy7Lg7L1hk7yD82jEqYVXm5mkKS+VHozeqZHI2n6xruz+FKUg8qdHcmXki3XLvWru2cWA==
   dependencies:
     "@nexus/schema" "^0.12.0-rc.13"
     "@types/express" "^4.17.2"
