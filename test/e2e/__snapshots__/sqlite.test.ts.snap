@@ -103,13 +103,9 @@ Object {
             "isDeprecated": false,
             "name": "hello",
             "type": Object {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": Object {
-                "kind": "OBJECT",
-                "name": "World",
-                "ofType": null,
-              },
+              "kind": "OBJECT",
+              "name": "World",
+              "ofType": null,
             },
           },
           Object {
@@ -119,19 +115,15 @@ Object {
             "isDeprecated": false,
             "name": "worlds",
             "type": Object {
-              "kind": "NON_NULL",
+              "kind": "LIST",
               "name": null,
               "ofType": Object {
-                "kind": "LIST",
+                "kind": "NON_NULL",
                 "name": null,
                 "ofType": Object {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": Object {
-                    "kind": "OBJECT",
-                    "name": "World",
-                    "ofType": null,
-                  },
+                  "kind": "OBJECT",
+                  "name": "World",
+                  "ofType": null,
                 },
               },
             },

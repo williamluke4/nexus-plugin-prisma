@@ -1,6 +1,6 @@
 import { introspectionQuery } from 'graphql'
-import { setupE2EContext } from 'nexus-future/dist/utils/e2e-testing'
-import { getTmpDir } from 'nexus-future/dist/utils/fs'
+import { setupE2EContext } from 'nexus-future/dist/lib/e2e-testing'
+import { getTmpDir } from 'nexus-future/dist/lib/fs'
 import * as Path from 'path'
 import stripAnsi from 'strip-ansi'
 
@@ -12,7 +12,7 @@ const ctx = setupE2EContext({
 test('e2e with sqlite', async () => {
   console.log(ctx.projectDir)
 
-  let nexusVersion = process.env.NEXUS_VERSION ?? 'stable'
+  let nexusVersion = process.env.NEXUS_VERSION ?? 'latest'
 
   // Run npx nexus
   const createAppResult = await ctx.spawnNPXNexus(
