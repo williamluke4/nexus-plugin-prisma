@@ -1,10 +1,12 @@
 import { createTesttimeDimension } from 'nexus-future/plugin'
 import { getPrismaClientInstance } from 'utils'
 
-export default createTesttimeDimension(() => ({
-  app: {
-    db: {
-      client: getPrismaClientInstance(),
+export default createTesttimeDimension(() => {
+  return {
+    app: {
+      db: {
+        client: getPrismaClientInstance(),
+      },
     },
-  },
-}))
+  }
+})
