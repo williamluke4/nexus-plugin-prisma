@@ -1,7 +1,40 @@
+import chalk from 'chalk'
+import * as fs from 'fs-jetpack'
+import { suggestionList } from 'lib/levenstein'
+import { printStack } from 'lib/print-stack'
+import { shouldGenerateArtifacts } from 'nexus-future/dist/runtime/schema/config'
 import { createRuntimeDimension } from 'nexus-future/plugin'
+import { nexusPrismaPlugin, Options } from 'nexus-prisma'
+import * as Path from 'path'
+import {
+  GENERATED_PRISMA_CLIENT_OUTPUT_PATH,
+  getPrismaClientInstance,
+} from 'utils'
+
+type UnknownFieldName = {
+  error: Error
+  unknownFieldName: string
+  validFieldNames: string[]
+  typeName: string
+}
+
+export type UnknownFieldType = {
+  unknownFieldType: string
+  error: Error
+  typeName: string
+  fieldName: string
+}
+
+type OptionsWithHook = Options & {
+  onUnknownFieldName: (params: UnknownFieldName) => void
+  onUnknownFieldType: (params: UnknownFieldType) => void
+}
 
 export default createRuntimeDimension(() => {
-  project.utils.log.trace('start')
+  const nexusPrismaTypegenOutput = fs.path(
+    'node_modules/@types/typegen-nexus-prisma/index.d.ts'
+  )
+  // project.utils.log.trace('start')
   const prisma = getPrismaClientInstance()
 
   return {
@@ -53,3 +86,40 @@ export default createRuntimeDimension(() => {
     },
   }
 })
+
+/**
+ * TODO ...
+ */
+function renderUnknownFieldTypeError(params: UnknownFieldType) {
+  const { stack, fileLineNumber } = printStack({
+    callsite: params.error.stack,
+  })
+
+  const intro = chalk`{yellow Warning:} ${params.error.message}\n{yellow Warning:} in ${fileLineNumber}`
+
+  // todo use logger once "pretty" api done
+  console.log(`${intro}${stack}`)
+}
+
+/**
+ * TODO ...
+ */
+function renderUnknownFieldNameError(params: UnknownFieldName) {
+  const { stack, fileLineNumber } = printStack({
+    callsite: params.error.stack,
+  })
+  const suggestions = suggestionList(
+    params.unknownFieldName,
+    params.validFieldNames
+  ).map(s => chalk.green(s))
+  const suggestionMessage =
+    suggestions.length === 0
+      ? ''
+      : chalk`{yellow Warning:} Did you mean ${suggestions
+          .map(s => `"${s}"`)
+          .join(', ')} ?`
+  const intro = chalk`{yellow Warning:} ${params.error.message}\n{yellow Warning:} in ${fileLineNumber}\n${suggestionMessage}`
+
+  // todo use logger once "pretty" api done
+  console.log(`${intro}${stack}`)
+}

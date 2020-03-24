@@ -25,3 +25,22 @@ export function linkableResolve(id: string): any {
     return require.resolve(id)
   }
 }
+
+let prismaClientInstance: object | null = null
+
+export const getPrismaClientInstance = () => {
+  if (!prismaClientInstance) {
+    const { PrismaClient } = linkableRequire('@prisma/client')
+
+    prismaClientInstance = new PrismaClient()
+  }
+
+  return prismaClientInstance
+}
+
+// HACK
+// 1. https://prisma-company.slack.com/archives/C8AKVD5HU/p1574267904197600
+// 2. https://prisma-company.slack.com/archives/CEYCG2MCN/p1574267824465700
+export const GENERATED_PRISMA_CLIENT_OUTPUT_PATH = Path.dirname(
+  linkableResolve('@prisma/client')
+)

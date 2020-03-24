@@ -13,7 +13,7 @@ import * as Path from 'path'
 import { suggestionList } from './lib/levenstein'
 import { printStack } from './lib/print-stack'
 import { simpleDebounce } from './lib/simpleDebounce'
-import { linkableRequire, linkableResolve } from './utils'
+import { getPrismaClientInstance, linkableResolve } from './utils'
 
 if (process.env.LINK) {
   process.env.NEXUS_PRISMA_LINK = process.env.LINK
@@ -49,18 +49,6 @@ const PRISMA_QUERY_ENGINE_VERSION = require('../package.json').prisma.version
 const GENERATED_PRISMA_CLIENT_OUTPUT_PATH = Path.dirname(
   linkableResolve('@prisma/client')
 )
-
-let prismaClientInstance: object | null = null
-
-const getPrismaClientInstance = () => {
-  if (!prismaClientInstance) {
-    const { PrismaClient } = linkableRequire('@prisma/client')
-
-    prismaClientInstance = new PrismaClient()
-  }
-
-  return prismaClientInstance
-}
 
 export default NexusPlugin.create(project => {
   const nexusPrismaTypegenOutput = fs.path(
@@ -120,14 +108,6 @@ export default NexusPlugin.create(project => {
       },
     }
   })
-
-  project.testing(() => ({
-    app: {
-      db: {
-        client: getPrismaClientInstance(),
-      },
-    },
-  }))
 
   project.workflow((hooks, { layout, packageManager }) => {
     project.utils.log.trace('start')
