@@ -17,3 +17,11 @@ export function linkableRequire(id: string): any {
     return require(id)
   }
 }
+
+export function linkableResolve(id: string): any {
+  if (process.env.LINK) {
+    return require.resolve(Path.join(process.cwd(), '/node_modules/', id))
+  } else {
+    return require.resolve(id)
+  }
+}

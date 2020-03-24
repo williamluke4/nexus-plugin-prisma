@@ -13,7 +13,7 @@ import * as Path from 'path'
 import { suggestionList } from './lib/levenstein'
 import { printStack } from './lib/print-stack'
 import { simpleDebounce } from './lib/simpleDebounce'
-import { linkableRequire } from './utils'
+import { linkableRequire, linkableResolve } from './utils'
 
 if (process.env.LINK) {
   process.env.NEXUS_PRISMA_LINK = process.env.LINK
@@ -46,9 +46,10 @@ const PRISMA_QUERY_ENGINE_VERSION = require('../package.json').prisma.version
 // HACK
 // 1. https://prisma-company.slack.com/archives/C8AKVD5HU/p1574267904197600
 // 2. https://prisma-company.slack.com/archives/CEYCG2MCN/p1574267824465700
-const GENERATED_PRISMA_CLIENT_OUTPUT_PATH = fs.path(
-  'node_modules/@prisma/client'
+const GENERATED_PRISMA_CLIENT_OUTPUT_PATH = Path.dirname(
+  linkableResolve('@prisma/client')
 )
+
 let prismaClientInstance: object | null = null
 
 const getPrismaClientInstance = () => {
