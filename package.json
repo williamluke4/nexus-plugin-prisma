@@ -14,9 +14,9 @@
     "dev": "tsc --watch",
     "build": "yarn clean && node build-scripts/update-hash.js && tsc",
     "build:ci": "tsc",
-    "test:e2e:mysql": "yarn test test/e2e/mysql.test.ts --testTimeout=400000",
-    "test:e2e:postgres": "yarn test test/e2e/postgres.test.ts --testTimeout=400000",
-    "test:e2e:sqlite": "yarn test test/e2e/sqlite.test.ts --testTimeout=400000",
+    "test:e2e:mysql": "yarn jest test/e2e/mysql.test.ts --testTimeout=400000",
+    "test:e2e:postgres": "yarn jest test/e2e/postgres.test.ts --testTimeout=400000",
+    "test:e2e:sqlite": "yarn jest test/e2e/sqlite.test.ts --testTimeout=400000",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "release:stable": "dripip stable",
     "release:preview": "dripip preview",
@@ -43,12 +43,12 @@
     "@types/prismjs": "1.16.0",
     "dripip": "0.8.0",
     "husky": "4.2.3",
+    "jest": "^25.1.0",
     "nexus-future": "^0.0.0-pr.534.1.b4b5b6b",
     "node-fetch": "2.6.0",
     "node-pty": "0.9.0",
     "prettier": "1.19.1",
     "pretty-quick": "2.0.1",
-    "tslib": "1.11.1",
     "typescript": "3.8.3"
   },
   "dependencies": {
@@ -71,7 +71,6 @@
     "version": "d3b0ceed5d87544b9d2decb70e08664f9047bb73"
   },
   "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node"
+    "preset": "ts-jest"
   }
 }
