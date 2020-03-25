@@ -11,14 +11,12 @@
     "global-type.d.ts"
   ],
   "scripts": {
-    "dev": "tsdx watch",
+    "dev": "tsc --watch",
     "build": "yarn clean && node build-scripts/update-hash.js && tsc",
     "build:ci": "tsc",
-    "test": "tsdx test",
     "test:e2e:mysql": "yarn test test/e2e/mysql.test.ts --testTimeout=400000",
     "test:e2e:postgres": "yarn test test/e2e/postgres.test.ts --testTimeout=400000",
     "test:e2e:sqlite": "yarn test test/e2e/sqlite.test.ts --testTimeout=400000",
-    "lint": "tsdx lint",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "release:stable": "dripip stable",
     "release:preview": "dripip preview",
@@ -39,7 +37,6 @@
     "trailingComma": "es5"
   },
   "devDependencies": {
-    "@babel/core": "^7.8.7",
     "@types/common-tags": "1.8.0",
     "@types/jest": "25.1.4",
     "@types/node": "^13.9.3",
