@@ -30,11 +30,11 @@ type OptionsWithHook = Options & {
   onUnknownFieldType: (params: UnknownFieldType) => void
 }
 
-export default createRuntimeDimension(() => {
+export default createRuntimeDimension(project => {
   const nexusPrismaTypegenOutput = fs.path(
     'node_modules/@types/typegen-nexus-prisma/index.d.ts'
   )
-  // project.utils.log.trace('start')
+  project.log.trace('start')
   const prisma = getPrismaClientInstance()
 
   return {
