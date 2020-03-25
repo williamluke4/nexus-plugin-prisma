@@ -1,16 +1,15 @@
 {
   "include": ["src", "global-type.d.ts"],
   "compilerOptions": {
-    "skipLibCheck": true,
-    "target": "es5",
-    "module": "commonjs",
-    "importHelpers": true,
-    "declaration": true,
-    "sourceMap": true,
     "rootDir": "src",
     "outDir": "dist",
+    "skipLibCheck": true,
+    "target": "es2016",
+    "module": "commonjs",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "strict": true,
-    "moduleResolution": "node",
     "resolveJsonModule": true,
     "esModuleInterop": true
   }
