@@ -1,5 +1,5 @@
 import { createTesttimeDimension } from 'nexus-future/plugin'
-import { getPrismaClientInstance } from 'utils'
+import { getPrismaClientInstance } from './utils'
 
 export default createTesttimeDimension(() => {
   return {

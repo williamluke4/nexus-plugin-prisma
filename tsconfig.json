@@ -1,24 +1,17 @@
 {
-  "include": ["src", "test", "global-type.d.ts"],
+  "include": ["src", "global-type.d.ts"],
   "compilerOptions": {
+    "skipLibCheck": true,
     "target": "es5",
-    "module": "esnext",
-    "lib": ["esnext"],
+    "module": "commonjs",
     "importHelpers": true,
     "declaration": true,
     "sourceMap": true,
-    "rootDir": "./",
+    "rootDir": "src",
+    "outDir": "dist",
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "baseUrl": "./",
-    "paths": {
-      "*": ["src/*", "node_modules/*"]
-    },
     "esModuleInterop": true
   }
 }

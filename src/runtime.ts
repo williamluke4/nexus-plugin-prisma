@@ -1,15 +1,15 @@
 import chalk from 'chalk'
 import * as fs from 'fs-jetpack'
-import { suggestionList } from 'lib/levenstein'
-import { printStack } from 'lib/print-stack'
 import { shouldGenerateArtifacts } from 'nexus-future/dist/runtime/schema/config'
 import { createRuntimeDimension } from 'nexus-future/plugin'
 import { nexusPrismaPlugin, Options } from 'nexus-prisma'
 import * as Path from 'path'
+import { suggestionList } from './lib/levenstein'
+import { printStack } from './lib/print-stack'
 import {
   GENERATED_PRISMA_CLIENT_OUTPUT_PATH,
   getPrismaClientInstance,
-} from 'utils'
+} from './utils'
 
 type UnknownFieldName = {
   error: Error
