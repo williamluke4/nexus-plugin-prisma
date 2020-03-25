@@ -5,5 +5,7 @@
 Example
 
 ```
-NEXUS_PLUGIN_PRISMA_VERSION=... yarn test:e2e:sqlite
+export NEXUS_PLUGIN_PRISMA_VERSION=...
+export NEXUS_VERSION=...
+yarn test:e2e:sqlite
 ```
