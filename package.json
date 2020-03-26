@@ -8,11 +8,12 @@
   "typings": "dist/index.d.ts",
   "files": [
     "dist",
+    "scripts",
     "global-type.d.ts"
   ],
   "scripts": {
     "dev": "tsdx watch",
-    "build": "yarn clean && node build-scripts/update-hash.js && tsdx build",
+    "build": "yarn clean && node scripts/update-hash.js && tsdx build",
     "build:ci": "tsdx build",
     "test": "tsdx test",
     "test:e2e:mysql": "yarn test test/e2e/mysql.test.ts --testTimeout=400000",
@@ -24,7 +25,7 @@
     "release:preview": "dripip preview",
     "publish:pr": "PR=$(hub pr show -f '%I') && yarn publish --tag pr.${PR} --no-git-tag-version --new-version \"0.0.0-pr.${PR}.$(git show -s head --format='%h')\" && git checkout package.json",
     "prepack": "yarn -s build",
-    "postinstall": "mkdir -p \"$PWD/../@types/nexus-plugin-prisma\" && cp \"$PWD/global-type.d.ts\" \"$PWD/../@types/nexus-plugin-prisma/index.d.ts\""
+    "postinstall": "mkdir -p \"$PWD/../@types/nexus-plugin-prisma\" && cp \"$PWD/global-type.d.ts\" \"$PWD/../@types/nexus-plugin-prisma/index.d.ts\" && node ./scripts/postinstall.js"
   },
   "peerDependencies": {
     "nexus-future": "^0.12.0"
