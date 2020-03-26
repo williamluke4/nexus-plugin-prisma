@@ -56,6 +56,7 @@
     "typescript": "3.8.3"
   },
   "dependencies": {
+    "@prisma/cli": "^2.0.0-preview024",
     "@prisma/client": "2.0.0-preview023",
     "@prisma/generator-helper": "0.0.43",
     "@prisma/sdk": "0.0.222",
@@ -67,7 +68,6 @@
     "nexus": "^0.12.0-rc.13",
     "nexus-prisma": "^0.11.1",
     "open": "^7.0.3",
-    "prisma2": "2.0.0-preview023",
     "prismjs": "^1.19.0",
     "stacktrace-parser": "^0.1.9"
   },
