@@ -50,6 +50,7 @@ jobs:
         node-version: [10.x, 12.x]
         database: [sqlite, postgres, mysql]
         nexus-version: [latest, next]
+      fail-fast: false
     services:
       postgres:
         image: postgres:10.8
