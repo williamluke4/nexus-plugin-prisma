@@ -23,7 +23,7 @@
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "release:stable": "dripip stable",
     "release:preview": "dripip preview",
-    "publish:pr": "PR=$(hub pr show -f '%I') && yarn publish --tag pr.${PR} --no-git-tag-version --new-version \"0.0.0-pr.${PR}.$(git show -s head --format='%h')\" && git checkout package.json",
+    "release:pr": "dripip pr",
     "prepack": "yarn -s build",
     "postinstall": "mkdir -p \"$PWD/../@types/nexus-plugin-prisma\" && cp \"$PWD/global-type.d.ts\" \"$PWD/../@types/nexus-plugin-prisma/index.d.ts\" && node ./scripts/postinstall.js"
   },
@@ -57,6 +57,7 @@
     "typescript": "3.8.3"
   },
   "dependencies": {
+    "@nexus/schema": "^0.12.0-rc.13",
     "@prisma/client": "2.0.0-preview023",
     "@prisma/generator-helper": "0.0.43",
     "@prisma/sdk": "0.0.222",
@@ -65,8 +66,8 @@
     "common-tags": "^1.8.0",
     "fs-jetpack": "^2.2.3",
     "get-port": "^5.1.1",
-    "nexus": "^0.12.0-rc.13",
-    "nexus-prisma": "^0.11.1",
+    "graphql": "^14.6.0",
+    "nexus-prisma": "^0.12.0-next.1",
     "open": "^7.0.3",
     "prisma2": "2.0.0-preview023",
     "prismjs": "^1.19.0",
