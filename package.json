@@ -24,7 +24,7 @@
     "release:preview": "dripip preview",
     "release:pr": "dripip pr",
     "prepack": "yarn -s build",
-    "postinstall": "mkdir -p \"$PWD/../@types/nexus-plugin-prisma\" && cp \"$PWD/global-type.d.ts\" \"$PWD/../@types/nexus-plugin-prisma/index.d.ts\" && node ./scripts/postinstall.js"
+    "postinstall": "node ./scripts/postinstall.js"
   },
   "peerDependencies": {
     "nexus-future": "^0.13.0-next",
