@@ -12,14 +12,13 @@
     "global-type.d.ts"
   ],
   "scripts": {
-    "dev": "tsdx watch",
-    "build": "yarn clean && node scripts/update-hash.js && tsdx build",
-    "build:ci": "tsdx build",
-    "test": "tsdx test",
+    "dev": "tsc --watch",
+    "build": "yarn clean && node scripts/update-hash.js && tsc",
+    "build:ci": "tsc",
+    "test": "jest",
     "test:e2e:mysql": "yarn test test/e2e/mysql.test.ts --testTimeout=400000",
     "test:e2e:postgres": "yarn test test/e2e/postgres.test.ts --testTimeout=400000",
     "test:e2e:sqlite": "yarn test test/e2e/sqlite.test.ts --testTimeout=400000",
-    "lint": "tsdx lint",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "release:stable": "dripip stable",
     "release:preview": "dripip preview",
@@ -47,12 +46,14 @@
     "@types/prismjs": "1.16.0",
     "dripip": "0.8.0",
     "husky": "4.2.3",
+    "jest": "^25.2.2",
+    "jest-watch-typeahead": "^0.4.2",
     "nexus-future": "^0.12.0",
     "node-fetch": "2.6.0",
     "node-pty": "0.9.0",
     "prettier": "1.19.1",
     "pretty-quick": "2.0.1",
-    "tsdx": "0.12.3",
+    "ts-jest": "^25.2.1",
     "tslib": "1.11.1",
     "typescript": "3.8.3"
   },
@@ -78,6 +79,10 @@
   },
   "jest": {
     "preset": "ts-jest",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "watchPlugins": [
+      "jest-watch-typeahead/filename",
+      "jest-watch-typeahead/testname"
+    ]
   }
 }

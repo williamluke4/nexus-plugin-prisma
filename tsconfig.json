@@ -1,13 +1,14 @@
 {
-  "include": ["src", "test", "global-type.d.ts"],
   "compilerOptions": {
-    "target": "es5",
-    "module": "esnext",
+    "skipLibCheck": true,
+    "target": "ES2018",
+    "rootDir": "src",
+    "outDir": "dist",
+    "module": "CommonJS",
     "lib": ["esnext"],
-    "importHelpers": true,
-    "declaration": true,
     "sourceMap": true,
-    "rootDir": "./",
+    "declaration": true,
+    "declarationMap": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -15,10 +16,7 @@
     "noFallthroughCasesInSwitch": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "baseUrl": "./",
-    "paths": {
-      "*": ["src/*", "node_modules/*"]
-    },
     "esModuleInterop": true
-  }
+  },
+  "include": ["src", "global-type.d.ts"]
 }
