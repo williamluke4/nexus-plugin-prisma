@@ -28,12 +28,12 @@
   },
   "peerDependencies": {
     "nexus-future": "^0.13.0-next",
-    "prisma2": "2.0.0-preview023"
+    "@prisma/cli": "2.0.0-preview025"
   },
   "dependencies": {
     "@nexus/schema": "^0.12.0-rc.13",
-    "@prisma/client": "2.0.0-preview023",
-    "@prisma/sdk": "0.0.222",
+    "@prisma/client": "2.0.0-preview025",
+    "@prisma/sdk": "2.0.0-preview025",
     "chalk": "^3.0.0",
     "common-tags": "^1.8.0",
     "fs-jetpack": "^2.2.3",
@@ -63,7 +63,7 @@
     "typescript": "3.8.3"
   },
   "prisma": {
-    "version": "d3b0ceed5d87544b9d2decb70e08664f9047bb73"
+    "version": "8814060fa684793b73d07dbfccd4b7777b3361ae"
   },
   "jest": {
     "preset": "ts-jest",

@@ -11,8 +11,11 @@ import * as Path from 'path'
 /**
  * Pinned query-engine version. Calculated at build time and based on `prisma2` version
  */
-export const PRISMA_QUERY_ENGINE_VERSION: string = require('prisma2/package.json')
-  .prisma.version
+export const PRISMA_QUERY_ENGINE_VERSION: string = require(Path.join(
+  process.cwd(),
+  '/node_modules/',
+  '@prisma/cli/package.json'
+)).prisma.version
 
 export function worktimePlugin(project: NexusPlugin.Lens): WorkflowDefiner {
   let elapsedMsSinceRestart = Date.now()

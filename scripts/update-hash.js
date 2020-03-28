@@ -11,7 +11,7 @@ async function main() {
   const localPackageJson = require(packageJsonPath)
   const prismaClientVersion = localPackageJson.dependencies['@prisma/client']
   const prisma2PackageJson = await fetch(
-    `https://unpkg.com/prisma2@${prismaClientVersion}/package.json`
+    `https://unpkg.com/@prisma/cli@${prismaClientVersion}/package.json`
   )
   const hash = (await prisma2PackageJson.json()).prisma.version
 
