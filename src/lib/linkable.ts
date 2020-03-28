@@ -11,17 +11,9 @@ import * as Path from 'path'
  * on disk, not hte user's project, where they just LINKED into.
  */
 export function linkableRequire(id: string): any {
-  if (process.env.LINK) {
-    return require(Path.join(process.cwd(), '/node_modules/', id))
-  } else {
-    return require(id)
-  }
+  return require(Path.join(process.cwd(), '/node_modules/', id))
 }
 
 export function linkableResolve(id: string): any {
-  if (process.env.LINK) {
-    return require.resolve(Path.join(process.cwd(), '/node_modules/', id))
-  } else {
-    return require.resolve(id)
-  }
+  return require.resolve(Path.join(process.cwd(), '/node_modules/', id))
 }
