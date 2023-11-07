@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.8.7",
-    "@types/common-tags": "1.8.0",
+    "@types/common-tags": "1.8.4",
     "@types/jest": "25.1.4",
     "@types/prismjs": "1.16.0",
     "dripip": "0.8.0",
